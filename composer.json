@@ -1,0 +1,25 @@
+{
+    "name": "summer/west",
+    "autoload": {
+        "psr-4": {
+            "Summer\\West\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "summer-boythink",
+            "email": "2071792205@qq.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "require-dev": {
+        "pestphp/pest": "*",
+        "laravel/pint": "^1.18"
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    }
+}
