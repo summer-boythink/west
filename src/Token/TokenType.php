@@ -2,63 +2,42 @@
 
 namespace Summer\West\Token;
 
-class TokenType
+enum TokenType: string
 {
-    const ILLEGAL = 'ILLEGAL';
-
-    const EOF = 'EOF';
+    case ILLEGAL = 'ILLEGAL';
+    case EOF = 'EOF';
 
     // Identifiers + literals
-    const IDENT = 'IDENT'; // add, foobar, x, y, ...
+    case IDENT = 'IDENT'; // add, foobar, x, y, ...
 
-    const INT = 'INT'; // 1343456
+    case INT = 'INT'; // 1343456
 
     // Operators
-    const ASSIGN = '=';
-
-    const PLUS = '+';
-
-    const MINUS = '-';
-
-    const BANG = '!';
-
-    const ASTERISK = '*';
-
-    const SLASH = '/';
-
-    const LT = '<';
-
-    const GT = '>';
-
-    const EQ = '==';
-
-    const NOT_EQ = '!=';
+    case ASSIGN = '=';
+    case PLUS = '+';
+    case MINUS = '-';
+    case BANG = '!';
+    case ASTERISK = '*';
+    case SLASH = '/';
+    case LT = '<';
+    case GT = '>';
+    case EQ = '==';
+    case NOT_EQ = '!=';
 
     // Delimiters
-    const COMMA = ',';
-
-    const SEMICOLON = ';';
-
-    const LPAREN = '(';
-
-    const RPAREN = ')';
-
-    const LBRACE = '{';
-
-    const RBRACE = '}';
+    case COMMA = ',';
+    case SEMICOLON = ';';
+    case LPAREN = '(';
+    case RPAREN = ')';
+    case LBRACE = '{';
+    case RBRACE = '}';
 
     // Keywords
-    const FUNCTION = 'FUNCTION';
-
-    const LET = 'LET';
-
-    const TRUE = 'TRUE';
-
-    const FALSE = 'FALSE';
-
-    const IF = 'IF';
-
-    const ELSE = 'ELSE';
-
-    const RETURN = 'RETURN';
+    case FUNCTION = 'FUNCTION';
+    case LET = 'LET';
+    case TRUE = 'TRUE';
+    case FALSE = 'FALSE';
+    case IF = 'IF';
+    case ELSE = 'ELSE';
+    case RETURN = 'RETURN';
 }
