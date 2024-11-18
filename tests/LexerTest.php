@@ -1,8 +1,6 @@
 <?php
 
-namespace Summer\West\Tests;
-
-require __DIR__.'/../vendor/autoload.php';
+namespace Tests;
 
 use Summer\West\Lexer\Lexer;
 use Summer\West\Token\TokenType;

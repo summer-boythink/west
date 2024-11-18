@@ -15,7 +15,7 @@ class Token
     }
 
     // Getter for token type
-    public function getType(): string
+    public function getType(): TokenType
     {
         return $this->type;
     }

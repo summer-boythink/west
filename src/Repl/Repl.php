@@ -3,6 +3,7 @@
 namespace Summer\West\Repl;
 
 use Summer\West\Lexer\Lexer;
+use Summer\West\Token\Token;
 use Summer\West\Token\TokenType;
 
 class Repl
@@ -35,12 +36,12 @@ class Repl
         }
     }
 
-    private function formatToken($token)
+    private function formatToken(Token $token)
     {
         // Here, you can adjust what properties of the token you want to display
         return sprintf(
             'Type: %-9s Literal: %s',
-            $token->getType(),
+            $token->getType()->name,
             $token->getLiteral()
         );
     }

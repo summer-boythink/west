@@ -14,7 +14,7 @@ class Tokenizer
         'return' => TokenType::RETURN,
     ];
 
-    public static function lookupIdent(string $ident): string
+    public static function lookupIdent(string $ident): TokenType
     {
         if (array_key_exists($ident, self::$keywords)) {
             return self::$keywords[$ident];

@@ -2,6 +2,8 @@
 
 namespace Summer\West\Ast;
 
+use Summer\West\Token\Token;
+
 class Program
 {
     /** @var Statement[] */
@@ -269,15 +271,5 @@ class CallExpression extends BaseNode implements Expression
         $args = implode(', ', array_map(fn ($a) => $a->__toString(), $this->arguments));
 
         return $this->function->__toString().'('.$args.')';
-    }
-}
-
-class Token
-{
-    public string $literal;
-
-    public function __construct(string $literal)
-    {
-        $this->literal = $literal;
     }
 }

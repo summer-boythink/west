@@ -34,7 +34,7 @@ class Lexer
                 if ($this->peekChar() === '=') {
                     $ch = $this->ch;
                     $this->readChar();
-                    $literal = $ch.$this->ch;
+                    $literal = "{$ch}{$this->ch}";
                     $tok = new Token(TokenType::EQ, $literal);
                 } else {
                     $tok = $this->newToken(TokenType::ASSIGN, $this->ch);
@@ -186,7 +186,7 @@ class Lexer
         return preg_match('/\d/', $ch) === 1;
     }
 
-    private function newToken(string $tokenType, string $ch): Token
+    private function newToken(TokenType $tokenType, string $ch): Token
     {
         return new Token($tokenType, $ch);
     }

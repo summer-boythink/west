@@ -2,6 +2,8 @@
 
 namespace Summer\West\Ast;
 
+use Summer\West\Token\Token;
+
 abstract class BaseNode implements Node
 {
     protected Token $token;
@@ -13,7 +15,7 @@ abstract class BaseNode implements Node
 
     public function tokenLiteral(): string
     {
-        return $this->token->literal;
+        return $this->token->getLiteral();
     }
 
     abstract public function __toString(): string;

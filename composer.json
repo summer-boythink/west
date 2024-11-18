@@ -2,8 +2,12 @@
     "name": "summer/west",
     "autoload": {
         "psr-4": {
-            "Summer\\West\\": "src/"
-        }
+            "Summer\\West\\": "src/",
+            "Tests\\": "tests/"
+        },
+        "classmap": [
+            "src/Ast/"
+        ]
     },
     "authors": [
         {
@@ -21,5 +25,8 @@
         "allow-plugins": {
             "pestphp/pest-plugin": true
         }
+    },
+    "scripts":{
+        "start":"@php bin/main.php"
     }
 }

@@ -1,5 +1,7 @@
 <?php
 
+namespace Tests;
+
 use Summer\West\Ast\Identifier;
 use Summer\West\Ast\LetStatement;
 use Summer\West\Ast\Program;
