@@ -29,9 +29,9 @@ class LetStatement extends BaseNode implements Statement
 {
     public Identifier $name;
 
-    public Expression $value;
+    public ?Expression $value;
 
-    public function __construct(Token $token, Identifier $name, Expression $value)
+    public function __construct(Token $token, Identifier $name, ?Expression $value)
     {
         parent::__construct($token);
         $this->name = $name;
