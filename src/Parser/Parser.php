@@ -4,8 +4,8 @@ namespace Summer\West\Parser;
 
 use Summer\West\Ast\Identifier;
 use Summer\West\Ast\LetStatement;
-use Summer\West\AST\Program;
-use Summer\West\AST\Statement;
+use Summer\West\Ast\Program;
+use Summer\West\Ast\Statement;
 use Summer\West\Lexer\Lexer;
 use Summer\West\Token\Token;
 use Summer\West\Token\TokenType;
@@ -18,6 +18,8 @@ class Parser
 
     private ?Token $peekToken = null;
 
+    private array $errors = []; // 添加错误存储
+
     public function __construct(Lexer $lexer)
     {
         $this->lexer = $lexer;
@@ -25,6 +27,16 @@ class Parser
         // 初始化 curToken 和 peekToken
         $this->nextToken();
         $this->nextToken();
+    }
+
+    public function getErrors(): array
+    {
+        return $this->errors; // 返回错误列表
+    }
+
+    private function addError(string $message): void
+    {
+        $this->errors[] = $message;
     }
 
     private function nextToken(): void
@@ -39,13 +51,10 @@ class Parser
         $program->statements = [];
 
         while ($this->curToken !== null && $this->curToken->type !== TokenType::EOF) {
-
             $stmt = $this->parseStatement();
 
             if ($stmt !== null) {
                 $program->statements[] = $stmt;
-            } else {
-
             }
 
             $this->nextToken();
@@ -60,8 +69,7 @@ class Parser
             case TokenType::LET:
                 return $this->parseLetStatement();
             default:
-                // 记录未识别的语句类型
-                echo "Unrecognized statement at token: {$this->curToken->literal}\n";
+                $this->addError("Unrecognized statement at token: {$this->curToken->literal}");
 
                 return null;
         }
@@ -69,25 +77,24 @@ class Parser
 
     private function parseLetStatement(): ?LetStatement
     {
-        // 当前 token 应为 "let"
         $letToken = $this->curToken;
 
-        // 期望下一个 token 是标识符 (IDENT)
         if (! $this->expectPeek(TokenType::IDENT)) {
+            $this->addError("Expected IDENT after LET, but got {$this->peekToken?->type}");
+
             return null;
         }
 
-        // 创建 LetStatement，并设置 Name 为标识符
         $name = new Identifier($this->curToken, $this->curToken->literal);
         $stmt = new LetStatement($letToken, $name, null);
 
-        // 期望下一个 token 是赋值符号 (=)
         if (! $this->expectPeek(TokenType::ASSIGN)) {
+            $this->addError("Expected ASSIGN after IDENT, but got {$this->peekToken?->type}");
+
             return null;
         }
 
-        // 跳过对赋值表达式的处理，直到遇到分号
-        while ($this->curToken->type !== TokenType::SEMICOLON) {
+        while ($this->curToken->type !== TokenType::SEMICOLON && $this->curToken->type !== TokenType::EOF) {
             $this->nextToken();
         }
 
@@ -96,21 +103,23 @@ class Parser
 
     private function curTokenIs(TokenType $type): bool
     {
-        return $this->curToken->type == $type;
+        return $this->curToken->type === $type;
     }
 
     private function peekTokenIs(TokenType $type): bool
     {
-        return $this->peekToken->type == $type;
+        return $this->peekToken?->type === $type;
     }
 
     private function expectPeek(TokenType $type): bool
     {
-        if ($this->peekToken !== null && $this->peekToken->type === $type) {
+        if ($this->peekTokenIs($type)) {
             $this->nextToken();
 
             return true;
         }
+
+        $this->addError("Expected next token to be {$type->name}, got {$this->peekToken?->type} instead");
 
         return false;
     }

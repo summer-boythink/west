@@ -9,7 +9,7 @@ use Summer\West\Parser\Parser;
 it('parses let statements correctly', function () {
     $input = <<<'EOT'
 let x = 5;
-let y = 10;
+le1t y = 10;
 let foobar = 838383;
 EOT;
 
@@ -17,6 +17,7 @@ EOT;
     $parser = new Parser($lexer);
 
     $program = $parser->parseProgram();
+    checkParserErrors($parser);
 
     expect($program)->not->toBeNull();
     expect(count($program->statements))->toBe(3);
@@ -32,6 +33,18 @@ EOT;
         expect(testLetStatement($stmt, $test['expectedIdentifier']))->toBeTrue();
     }
 });
+
+function checkParserErrors(Parser $parser): void
+{
+    $errors = $parser->getErrors();
+    if (empty($errors)) {
+        return;
+    }
+
+    foreach ($errors as $error) {
+        echo "Parser error: {$error}\n";
+    }
+}
 
 function testLetStatement(LetStatement $stmt, string $name): bool
 {
