@@ -3,13 +3,14 @@
 namespace Tests;
 
 use Summer\West\Ast\LetStatement;
+use Summer\West\Ast\ReturnStatement;
 use Summer\West\Lexer\Lexer;
 use Summer\West\Parser\Parser;
 
 it('parses let statements correctly', function () {
     $input = <<<'EOT'
 let x = 5;
-le1t y = 10;
+let y = 10;
 let foobar = 838383;
 EOT;
 
@@ -31,6 +32,34 @@ EOT;
     foreach ($tests as $i => $test) {
         $stmt = $program->statements[$i];
         expect(testLetStatement($stmt, $test['expectedIdentifier']))->toBeTrue();
+    }
+});
+
+it('parses return statements correctly', function () {
+    // Define the input string with return statements
+    $input = <<<'EOT'
+return 5;
+return 10;
+return 993 322;
+EOT;
+
+    // Initialize the lexer and parser
+    $lexer = new Lexer($input);
+    $parser = new Parser($lexer);
+
+    // Parse the program
+    $program = $parser->parseProgram();
+
+    // Check for parser errors
+    expect($parser->getErrors())->toBeEmpty();
+
+    // Verify that the program contains 3 statements
+    expect(count($program->statements))->toBe(3);
+
+    // Loop through each statement to check that it's a ReturnStatement
+    foreach ($program->statements as $stmt) {
+        expect($stmt)->toBeInstanceOf(ReturnStatement::class);
+        expect($stmt->tokenLiteral())->toBe('return');
     }
 });
 
