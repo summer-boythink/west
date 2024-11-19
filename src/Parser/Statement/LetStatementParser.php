@@ -1,9 +1,10 @@
 <?php
 
-namespace Summer\West\Parser;
+namespace Summer\West\Parser\Statement;
 
 use Summer\West\Ast\Identifier;
 use Summer\West\Ast\LetStatement;
+use Summer\West\Parser\Parser;
 use Summer\West\Token\TokenType;
 
 class LetStatementParser

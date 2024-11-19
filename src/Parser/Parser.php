@@ -2,9 +2,14 @@
 
 namespace Summer\West\Parser;
 
+use Summer\West\Ast\Expression;
+use Summer\West\Ast\Identifier;
 use Summer\West\Ast\Program;
 use Summer\West\Ast\Statement;
 use Summer\West\Lexer\Lexer;
+use Summer\West\Parser\Statement\ExpressionStatementParser;
+use Summer\West\Parser\Statement\LetStatementParser;
+use Summer\West\Parser\Statement\ReturnStatementParser;
 use Summer\West\Token\Token;
 use Summer\West\Token\TokenType;
 
@@ -22,6 +27,14 @@ class Parser
 
     private ReturnStatementParser $returnStatementParser;
 
+    private ExpressionStatementParser $expressionStatementParser;
+
+    /** @var array<TokenType, callable|null> */
+    private array $prefixParseFns = [];
+
+    /** @var array<TokenType, callable|null> */
+    private array $infixParseFns = [];
+
     public function __construct(Lexer $lexer)
     {
         $this->lexer = $lexer;
@@ -33,6 +46,10 @@ class Parser
         // 初始化 let 语句解析器
         $this->letParser = new LetStatementParser($this);
         $this->returnStatementParser = new ReturnStatementParser($this);
+        $this->expressionStatementParser = new ExpressionStatementParser($this);
+
+        // 注册前缀解析函数
+        $this->registerPrefix(TokenType::IDENT, fn () => $this->parseIdentifier());
     }
 
     public function getErrors(): array
@@ -77,10 +94,35 @@ class Parser
             case TokenType::RETURN:
                 return $this->returnStatementParser->parse();
             default:
-                $this->addError("Unrecognized statement at token: {$this->curToken->literal}");
-
-                return null;
+                return $this->expressionStatementParser->parse();
         }
+    }
+
+    public function registerPrefix(TokenType $type, callable $fn): void
+    {
+        $this->prefixParseFns[$type->name] = $fn;
+    }
+
+    public function registerInfix(TokenType $type, callable $fn): void
+    {
+        $this->infixParseFns[$type->name] = $fn;
+    }
+
+    public function parseExpression(int $precedence): ?Expression
+    {
+        $prefix = $this->prefixParseFns[$this->curToken->type->name] ?? null;
+        if ($prefix === null) {
+            $this->addError("No prefix parse function for {$this->curToken->type->name}");
+
+            return null;
+        }
+
+        return $prefix();
+    }
+
+    private function parseIdentifier(): Identifier
+    {
+        return new Identifier($this->curToken, $this->curToken->literal);
     }
 
     public function curTokenIs(TokenType $type): bool

@@ -66,9 +66,9 @@ class ReturnStatement extends BaseNode implements Statement
 
 class ExpressionStatement extends BaseNode implements Statement
 {
-    public Expression $expression;
+    public ?Expression $expression;
 
-    public function __construct(Token $token, Expression $expression)
+    public function __construct(Token $token, ?Expression $expression)
     {
         parent::__construct($token);
         $this->expression = $expression;

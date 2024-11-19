@@ -1,8 +1,9 @@
 <?php
 
-namespace Summer\West\Parser;
+namespace Summer\West\Parser\Statement;
 
 use Summer\West\Ast\ReturnStatement;
+use Summer\West\Parser\Parser;
 use Summer\West\Token\TokenType;
 
 class ReturnStatementParser
