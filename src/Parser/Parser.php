@@ -4,6 +4,7 @@ namespace Summer\West\Parser;
 
 use Summer\West\Ast\Expression;
 use Summer\West\Ast\Identifier;
+use Summer\West\Ast\IntegerLiteral;
 use Summer\West\Ast\Program;
 use Summer\West\Ast\Statement;
 use Summer\West\Lexer\Lexer;
@@ -50,6 +51,8 @@ class Parser
 
         // 注册前缀解析函数
         $this->registerPrefix(TokenType::IDENT, fn () => $this->parseIdentifier());
+        $this->registerPrefix(TokenType::INT, fn () => $this->parseIntegerLiteral());
+
     }
 
     public function getErrors(): array
@@ -123,6 +126,23 @@ class Parser
     private function parseIdentifier(): Identifier
     {
         return new Identifier($this->curToken, $this->curToken->literal);
+    }
+
+    public function parseIntegerLiteral(): ?Expression
+    {
+        $literal = new IntegerLiteral($this->curToken, null);
+
+        // 尝试解析整数值
+        $value = filter_var($this->curToken->literal, FILTER_VALIDATE_INT);
+        if ($value === false) {
+            $this->addError(sprintf('could not parse %q as integer', $this->curToken->literal));
+
+            return null;
+        }
+
+        $literal->value = $value;
+
+        return $literal;
     }
 
     public function curTokenIs(TokenType $type): bool

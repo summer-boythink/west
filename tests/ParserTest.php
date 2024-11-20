@@ -4,6 +4,7 @@ namespace Tests;
 
 use Summer\West\Ast\ExpressionStatement;
 use Summer\West\Ast\Identifier;
+use Summer\West\Ast\IntegerLiteral;
 use Summer\West\Ast\LetStatement;
 use Summer\West\Ast\ReturnStatement;
 use Summer\West\Lexer\Lexer;
@@ -86,6 +87,33 @@ it('parses identifier expressions correctly', function () {
     expect($expression)->toBeInstanceOf(Identifier::class);
     expect($expression->value)->toBe('foobar');
     expect($expression->tokenLiteral())->toBe('foobar');
+});
+
+it('parses integer literal expressions correctly', function () {
+    $input = '5;';
+
+    $lexer = new Lexer($input);
+    $parser = new Parser($lexer);
+
+    $program = $parser->parseProgram();
+    checkParserErrors($parser);
+
+    // 确保 Program 有一个语句
+    expect($program->statements)->toHaveCount(1);
+
+    // 获取第一个语句并检查其类型
+    /** @var ExpressionStatement $stmt */
+    $stmt = $program->statements[0];
+    expect($stmt)->toBeInstanceOf(ExpressionStatement::class);
+
+    // 获取表达式并检查其类型
+    /** @var IntegerLiteral $expression */
+    $expression = $stmt->expression;
+    expect($expression)->toBeInstanceOf(IntegerLiteral::class);
+
+    // 验证整数值和 TokenLiteral
+    expect($expression->value)->toBe(5);
+    expect($expression->tokenLiteral())->toBe('5');
 });
 
 function checkParserErrors(Parser $parser): void

@@ -138,9 +138,9 @@ class Boolean extends BaseNode implements Expression
 
 class IntegerLiteral extends BaseNode implements Expression
 {
-    public int $value;
+    public ?int $value;
 
-    public function __construct(Token $token, int $value)
+    public function __construct(Token $token, ?int $value)
     {
         parent::__construct($token);
         $this->value = $value;
