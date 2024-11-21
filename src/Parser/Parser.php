@@ -8,6 +8,9 @@ use Summer\West\Ast\IntegerLiteral;
 use Summer\West\Ast\Program;
 use Summer\West\Ast\Statement;
 use Summer\West\Lexer\Lexer;
+use Summer\West\Parser\Expression\IdentifierParser;
+use Summer\West\Parser\Expression\IExpressionParser;
+use Summer\West\Parser\Expression\IntegerLiteralParser;
 use Summer\West\Parser\Statement\ExpressionStatementParser;
 use Summer\West\Parser\Statement\LetStatementParser;
 use Summer\West\Parser\Statement\ReturnStatementParser;
@@ -50,8 +53,8 @@ class Parser
         $this->expressionStatementParser = new ExpressionStatementParser($this);
 
         // 注册前缀解析函数
-        $this->registerPrefix(TokenType::IDENT, fn () => $this->parseIdentifier());
-        $this->registerPrefix(TokenType::INT, fn () => $this->parseIntegerLiteral());
+        $this->registerPrefix(TokenType::IDENT, IdentifierParser::class);
+        $this->registerPrefix(TokenType::INT, IntegerLiteralParser::class);
 
     }
 
@@ -91,19 +94,22 @@ class Parser
 
     private function parseStatement(): ?Statement
     {
-        switch ($this->curToken->type) {
-            case TokenType::LET:
-                return $this->letParser->parse(); // 调用 LetStatementParser 的解析方法
-            case TokenType::RETURN:
-                return $this->returnStatementParser->parse();
-            default:
-                return $this->expressionStatementParser->parse();
-        }
+        return match ($this->curToken->type) {
+            TokenType::LET => $this->letParser->parse(),
+            TokenType::RETURN => $this->returnStatementParser->parse(),
+            default => $this->expressionStatementParser->parse(),
+        };
     }
 
-    public function registerPrefix(TokenType $type, callable $fn): void
+    public function registerPrefix(TokenType $type, string $parserClass): void
     {
-        $this->prefixParseFns[$type->name] = $fn;
+        $this->prefixParseFns[$type->name] = function () use ($parserClass) {
+
+            /** @var IExpressionParser $parser */
+            $parser = new $parserClass($this);
+
+            return $parser->parse();
+        };
     }
 
     public function registerInfix(TokenType $type, callable $fn): void

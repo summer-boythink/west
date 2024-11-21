@@ -6,7 +6,7 @@ use Summer\West\Ast\ReturnStatement;
 use Summer\West\Parser\Parser;
 use Summer\West\Token\TokenType;
 
-class ReturnStatementParser
+class ReturnStatementParser implements IStatementParser
 {
     private Parser $parser;
 
