@@ -9,7 +9,7 @@ use Summer\West\Ast\Program;
 use Summer\West\Ast\Statement;
 use Summer\West\Lexer\Lexer;
 use Summer\West\Parser\Expression\IdentifierParser;
-use Summer\West\Parser\Expression\IExpressionParser;
+use Summer\West\Parser\Expression\IExpression;
 use Summer\West\Parser\Expression\IntegerLiteralParser;
 use Summer\West\Parser\Statement\ExpressionStatementParser;
 use Summer\West\Parser\Statement\LetStatementParser;
@@ -105,7 +105,7 @@ class Parser
     {
         $this->prefixParseFns[$type->name] = function () use ($parserClass) {
 
-            /** @var IExpressionParser $parser */
+            /** @var IExpression $parser */
             $parser = new $parserClass($this);
 
             return $parser->parse();

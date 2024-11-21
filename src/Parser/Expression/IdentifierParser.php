@@ -6,7 +6,7 @@ use Summer\West\Ast\Expression;
 use Summer\West\Ast\Identifier;
 use Summer\West\Parser\Parser;
 
-class IdentifierParser implements IExpressionParser
+class IdentifierParser implements IExpression
 {
     private Parser $parser;
 

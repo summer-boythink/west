@@ -7,7 +7,7 @@ use Summer\West\Parser\Parser;
 use Summer\West\Parser\Precedence;
 use Summer\West\Token\TokenType;
 
-class ExpressionStatementParser implements IStatementParser
+class ExpressionStatementParser implements IStatement
 {
     private Parser $parser;
 

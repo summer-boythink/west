@@ -7,7 +7,7 @@ use Summer\West\Ast\LetStatement;
 use Summer\West\Parser\Parser;
 use Summer\West\Token\TokenType;
 
-class LetStatementParser implements IStatementParser
+class LetStatementParser implements IStatement
 {
     private Parser $parser;
 

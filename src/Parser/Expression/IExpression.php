@@ -2,7 +2,7 @@
 
 namespace Summer\West\Parser\Expression;
 
-interface IExpressionParser
+interface IExpression
 {
     public function parse(): mixed;
 }

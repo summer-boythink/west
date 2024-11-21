@@ -2,7 +2,7 @@
 
 namespace Summer\West\Parser\Statement;
 
-interface IStatementParser
+interface IStatement
 {
     public function parse(): mixed;
 }
