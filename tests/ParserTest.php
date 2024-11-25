@@ -6,6 +6,7 @@ use Summer\West\Ast\ExpressionStatement;
 use Summer\West\Ast\Identifier;
 use Summer\West\Ast\IntegerLiteral;
 use Summer\West\Ast\LetStatement;
+use Summer\West\Ast\PrefixExpression;
 use Summer\West\Ast\ReturnStatement;
 use Summer\West\Lexer\Lexer;
 use Summer\West\Parser\Parser;
@@ -114,6 +115,44 @@ it('parses integer literal expressions correctly', function () {
     // 验证整数值和 TokenLiteral
     expect($expression->value)->toBe(5);
     expect($expression->tokenLiteral())->toBe('5');
+});
+
+it('parses prefix expressions correctly', function () {
+    $prefixTests = [
+        ['input' => '!5;', 'operator' => '!', 'integerValue' => 5],
+        ['input' => '-15;', 'operator' => '-', 'integerValue' => 15],
+    ];
+
+    foreach ($prefixTests as $test) {
+        $lexer = new Lexer($test['input']);
+        $parser = new Parser($lexer);
+
+        $program = $parser->parseProgram();
+        checkParserErrors($parser);
+
+        // 检查 Program 的 statements 数量是否正确
+        expect($program->statements)->toHaveCount(1);
+
+        // 获取第一个语句并检查其类型
+        /** @var ExpressionStatement $stmt */
+        $stmt = $program->statements[0];
+        expect($stmt)->toBeInstanceOf(ExpressionStatement::class);
+
+        // 获取表达式并检查其类型
+        /** @var PrefixExpression $expression */
+        $expression = $stmt->expression;
+        expect($expression)->toBeInstanceOf(PrefixExpression::class);
+
+        // 验证操作符
+        expect($expression->operator)->toBe($test['operator']);
+
+        // 验证右侧表达式的值
+        /** @var IntegerLiteral $right */
+        $right = $expression->right;
+        expect($right)->toBeInstanceOf(IntegerLiteral::class);
+        expect($right->value)->toBe($test['integerValue']);
+        expect($right->tokenLiteral())->toBe((string) $test['integerValue']);
+    }
 });
 
 function checkParserErrors(Parser $parser): void

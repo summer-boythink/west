@@ -11,6 +11,7 @@ use Summer\West\Lexer\Lexer;
 use Summer\West\Parser\Expression\IdentifierParser;
 use Summer\West\Parser\Expression\IExpression;
 use Summer\West\Parser\Expression\IntegerLiteralParser;
+use Summer\West\Parser\Expression\PrefixExpressionParser;
 use Summer\West\Parser\Statement\ExpressionStatementParser;
 use Summer\West\Parser\Statement\LetStatementParser;
 use Summer\West\Parser\Statement\ReturnStatementParser;
@@ -55,6 +56,8 @@ class Parser
         // 注册前缀解析函数
         $this->registerPrefix(TokenType::IDENT, IdentifierParser::class);
         $this->registerPrefix(TokenType::INT, IntegerLiteralParser::class);
+        $this->registerPrefix(TokenType::BANG, PrefixExpressionParser::class);
+        $this->registerPrefix(TokenType::MINUS, PrefixExpressionParser::class);
 
     }
 
