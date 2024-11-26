@@ -3,11 +3,10 @@
 namespace Summer\West\Parser\Expression;
 
 use Summer\West\Ast\Expression;
-use Summer\West\Ast\PrefixExpression;
+use Summer\West\Ast\InfixExpression;
 use Summer\West\Parser\Parser;
-use Summer\West\Parser\PrecedenceLevel;
 
-class PrefixExpressionParser implements IExpression
+class InfixExpressionParser implements IinfixExpression
 {
     private Parser $parser;
 
@@ -16,16 +15,17 @@ class PrefixExpressionParser implements IExpression
         $this->parser = $parser;
     }
 
-    public function parse(): ?Expression
+    public function parse(Expression $left): ?Expression
     {
         $operator = $this->parser->getCurToken()->literal;
+        $precedence = $this->parser->getCurrentPrecedence();
 
-        $this->parser->next(); // 移动到操作符右边的表达式
+        $this->parser->next(); // 跳过操作符，解析右表达式
+        $right = $this->parser->parseExpression($precedence);
 
-        $right = $this->parser->parseExpression(PrecedenceLevel::PREFIX);
-
-        return new PrefixExpression(
+        return new InfixExpression(
             $this->parser->getCurToken(),
+            $left,
             $operator,
             $right
         );

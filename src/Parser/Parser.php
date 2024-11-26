@@ -3,13 +3,13 @@
 namespace Summer\West\Parser;
 
 use Summer\West\Ast\Expression;
-use Summer\West\Ast\Identifier;
-use Summer\West\Ast\IntegerLiteral;
 use Summer\West\Ast\Program;
 use Summer\West\Ast\Statement;
 use Summer\West\Lexer\Lexer;
 use Summer\West\Parser\Expression\IdentifierParser;
 use Summer\West\Parser\Expression\IExpression;
+use Summer\West\Parser\Expression\IinfixExpression;
+use Summer\West\Parser\Expression\InfixExpressionParser;
 use Summer\West\Parser\Expression\IntegerLiteralParser;
 use Summer\West\Parser\Expression\PrefixExpressionParser;
 use Summer\West\Parser\Statement\ExpressionStatementParser;
@@ -58,6 +58,16 @@ class Parser
         $this->registerPrefix(TokenType::INT, IntegerLiteralParser::class);
         $this->registerPrefix(TokenType::BANG, PrefixExpressionParser::class);
         $this->registerPrefix(TokenType::MINUS, PrefixExpressionParser::class);
+
+        // 注册中缀解析函数
+        $this->registerInfix(TokenType::PLUS, InfixExpressionParser::class);
+        $this->registerInfix(TokenType::MINUS, InfixExpressionParser::class);
+        $this->registerInfix(TokenType::ASTERISK, InfixExpressionParser::class);
+        $this->registerInfix(TokenType::SLASH, InfixExpressionParser::class);
+        $this->registerInfix(TokenType::EQ, InfixExpressionParser::class);
+        $this->registerInfix(TokenType::NOT_EQ, InfixExpressionParser::class);
+        $this->registerInfix(TokenType::LT, InfixExpressionParser::class);
+        $this->registerInfix(TokenType::GT, InfixExpressionParser::class);
 
     }
 
@@ -115,12 +125,17 @@ class Parser
         };
     }
 
-    public function registerInfix(TokenType $type, callable $fn): void
+    public function registerInfix(TokenType $type, string $parserClass): void
     {
-        $this->infixParseFns[$type->name] = $fn;
+        $this->infixParseFns[$type->name] = function (Expression $left) use ($parserClass) {
+            /** @var IinfixExpression $parser */
+            $parser = new $parserClass($this);
+
+            return $parser->parse($left);
+        };
     }
 
-    public function parseExpression(int $precedence): ?Expression
+    public function parseExpression(PrecedenceLevel $precedence): ?Expression
     {
         $prefix = $this->prefixParseFns[$this->curToken->type->name] ?? null;
         if ($prefix === null) {
@@ -129,29 +144,20 @@ class Parser
             return null;
         }
 
-        return $prefix();
-    }
+        /** @var Expression $leftExp */
+        $leftExp = $prefix();
 
-    private function parseIdentifier(): Identifier
-    {
-        return new Identifier($this->curToken, $this->curToken->literal);
-    }
+        while (! $this->peekTokenIs(TokenType::SEMICOLON) && $precedence->value < $this->getPeekPrecedence()->value) {
+            $infix = $this->infixParseFns[$this->peekToken->type->name] ?? null;
+            if ($infix === null) {
+                return $leftExp;
+            }
 
-    public function parseIntegerLiteral(): ?Expression
-    {
-        $literal = new IntegerLiteral($this->curToken, null);
-
-        // 尝试解析整数值
-        $value = filter_var($this->curToken->literal, FILTER_VALIDATE_INT);
-        if ($value === false) {
-            $this->addError(sprintf('could not parse %q as integer', $this->curToken->literal));
-
-            return null;
+            $this->nextToken();
+            $leftExp = $infix($leftExp);
         }
 
-        $literal->value = $value;
-
-        return $literal;
+        return $leftExp;
     }
 
     public function curTokenIs(TokenType $type): bool
@@ -185,6 +191,16 @@ class Parser
     public function getPeekToken(): ?Token
     {
         return $this->peekToken;
+    }
+
+    public function getCurrentPrecedence(): PrecedenceLevel
+    {
+        return Precedence::getPrecedence($this->curToken->type);
+    }
+
+    public function getPeekPrecedence(): PrecedenceLevel
+    {
+        return Precedence::getPrecedence($this->peekToken->type);
     }
 
     public function next(): void

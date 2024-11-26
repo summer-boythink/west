@@ -78,7 +78,7 @@ class ExpressionStatement extends BaseNode implements Statement
 
     public function __toString(): string
     {
-        return $this->expression->__toString().';';
+        return $this->expression->__toString();
     }
 }
 

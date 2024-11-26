@@ -2,19 +2,23 @@
 
 namespace Summer\West\Parser;
 
+use Summer\West\Token\TokenType;
+
 class Precedence
 {
-    public const LOWEST = 1;
+    private static array $precedenceMap = [
+        TokenType::EQ->value => PrecedenceLevel::EQUALS,
+        TokenType::NOT_EQ->value => PrecedenceLevel::EQUALS,
+        TokenType::LT->value => PrecedenceLevel::LESSGREATER,
+        TokenType::GT->value => PrecedenceLevel::LESSGREATER,
+        TokenType::PLUS->value => PrecedenceLevel::SUM,
+        TokenType::MINUS->value => PrecedenceLevel::SUM,
+        TokenType::SLASH->value => PrecedenceLevel::PRODUCT,
+        TokenType::ASTERISK->value => PrecedenceLevel::PRODUCT,
+    ];
 
-    public const EQUALS = 2;      // ==
-
-    public const LESSGREATER = 3; // > or <
-
-    public const SUM = 4;         // +
-
-    public const PRODUCT = 5;     // *
-
-    public const PREFIX = 6;      // -X or !X
-
-    public const CALL = 7;        // myFunction(X)
+    public static function getPrecedence(TokenType $type): PrecedenceLevel
+    {
+        return self::$precedenceMap[$type->value] ?? PrecedenceLevel::LOWEST;
+    }
 }

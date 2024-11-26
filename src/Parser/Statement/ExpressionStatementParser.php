@@ -4,7 +4,7 @@ namespace Summer\West\Parser\Statement;
 
 use Summer\West\Ast\ExpressionStatement;
 use Summer\West\Parser\Parser;
-use Summer\West\Parser\Precedence;
+use Summer\West\Parser\PrecedenceLevel;
 use Summer\West\Token\TokenType;
 
 class ExpressionStatementParser implements IStatement
@@ -22,7 +22,7 @@ class ExpressionStatementParser implements IStatement
         $stmt = new ExpressionStatement($this->parser->getCurToken(), null);
 
         // 解析表达式
-        $stmt->expression = $this->parser->parseExpression(Precedence::LOWEST); // LOWEST 优先级为 0
+        $stmt->expression = $this->parser->parseExpression(PrecedenceLevel::LOWEST); // LOWEST 优先级为 0
 
         // 如果下一个 token 是分号，则跳过
         if ($this->parser->peekTokenIs(TokenType::SEMICOLON)) {

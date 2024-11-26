@@ -4,6 +4,7 @@ namespace Tests;
 
 use Summer\West\Ast\ExpressionStatement;
 use Summer\West\Ast\Identifier;
+use Summer\West\Ast\InfixExpression;
 use Summer\West\Ast\IntegerLiteral;
 use Summer\West\Ast\LetStatement;
 use Summer\West\Ast\PrefixExpression;
@@ -155,6 +156,78 @@ it('parses prefix expressions correctly', function () {
     }
 });
 
+it('parses infix expressions correctly', function () {
+    $infixTests = [
+        ['input' => '5 + 5;', 'leftValue' => 5, 'operator' => '+', 'rightValue' => 5],
+        ['input' => '5 - 5;', 'leftValue' => 5, 'operator' => '-', 'rightValue' => 5],
+        ['input' => '5 * 5;', 'leftValue' => 5, 'operator' => '*', 'rightValue' => 5],
+        ['input' => '5 / 5;', 'leftValue' => 5, 'operator' => '/', 'rightValue' => 5],
+        ['input' => '5 > 5;', 'leftValue' => 5, 'operator' => '>', 'rightValue' => 5],
+        ['input' => '5 < 5;', 'leftValue' => 5, 'operator' => '<', 'rightValue' => 5],
+        ['input' => '5 == 5;', 'leftValue' => 5, 'operator' => '==', 'rightValue' => 5],
+        ['input' => '5 != 5;', 'leftValue' => 5, 'operator' => '!=', 'rightValue' => 5],
+    ];
+
+    foreach ($infixTests as $test) {
+        $lexer = new Lexer($test['input']);
+        $parser = new Parser($lexer);
+
+        $program = $parser->parseProgram();
+        checkParserErrors($parser);
+
+        // 检查 Program 的 statements 数量是否正确
+        expect($program->statements)->toHaveCount(1);
+
+        // 获取第一个语句并检查其类型
+        /** @var ExpressionStatement $stmt */
+        $stmt = $program->statements[0];
+        expect($stmt)->toBeInstanceOf(ExpressionStatement::class);
+
+        // 获取表达式并检查其类型
+        /** @var InfixExpression $expression */
+        $expression = $stmt->expression;
+        expect($expression)->toBeInstanceOf(InfixExpression::class);
+
+        // 验证左侧表达式的值
+        testIntegerLiteral($expression->left, $test['leftValue']);
+
+        // 验证操作符
+        expect($expression->operator)->toBe($test['operator']);
+
+        // 验证右侧表达式的值
+        testIntegerLiteral($expression->right, $test['rightValue']);
+    }
+});
+
+it('parses expressions with correct operator precedence', function () {
+    $tests = [
+        ['input' => '-a * b', 'expected' => '((-a) * b)'],
+        ['input' => '!-a', 'expected' => '(!(-a))'],
+        ['input' => 'a + b + c', 'expected' => '((a + b) + c)'],
+        ['input' => 'a + b - c', 'expected' => '((a + b) - c)'],
+        ['input' => 'a * b * c', 'expected' => '((a * b) * c)'],
+        ['input' => 'a * b / c', 'expected' => '((a * b) / c)'],
+        ['input' => 'a + b / c', 'expected' => '(a + (b / c))'],
+        ['input' => 'a + b * c + d / e - f', 'expected' => '(((a + (b * c)) + (d / e)) - f)'],
+        ['input' => '3 + 4; -5 * 5', 'expected' => '(3 + 4)((-5) * 5)'],
+        ['input' => '5 > 4 == 3 < 4', 'expected' => '((5 > 4) == (3 < 4))'],
+        ['input' => '5 < 4 != 3 > 4', 'expected' => '((5 < 4) != (3 > 4))'],
+        ['input' => '3 + 4 * 5 == 3 * 1 + 4 * 5', 'expected' => '((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))'],
+    ];
+
+    foreach ($tests as $test) {
+        $lexer = new Lexer($test['input']);
+        $parser = new Parser($lexer);
+
+        $program = $parser->parseProgram();
+        checkParserErrors($parser);
+
+        $actual = (string) $program;
+
+        expect($actual)->toBe($test['expected']);
+    }
+});
+
 function checkParserErrors(Parser $parser): void
 {
     $errors = $parser->getErrors();
@@ -165,6 +238,13 @@ function checkParserErrors(Parser $parser): void
     foreach ($errors as $error) {
         echo "Parser error: {$error}\n";
     }
+}
+
+function testIntegerLiteral($expression, int $expectedValue): void
+{
+    expect($expression)->toBeInstanceOf(IntegerLiteral::class);
+    expect($expression->value)->toBe($expectedValue);
+    expect($expression->tokenLiteral())->toBe((string) $expectedValue);
 }
 
 function testLetStatement(LetStatement $stmt, string $name): bool
