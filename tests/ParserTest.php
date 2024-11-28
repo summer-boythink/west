@@ -19,8 +19,8 @@ use Summer\West\Parser\Parser;
 it('parses let statements correctly', function () {
     $input = <<<'EOT'
 let x = 5;
-let y = 10;
-let foobar = 838383;
+let y = true;
+let foobar = y;
 EOT;
 
     $lexer = new Lexer($input);
@@ -33,14 +33,17 @@ EOT;
     expect(count($program->statements))->toBe(3);
 
     $tests = [
-        ['expectedIdentifier' => 'x'],
-        ['expectedIdentifier' => 'y'],
-        ['expectedIdentifier' => 'foobar'],
+        ['expectedIdentifier' => 'x', 'expectedValue' => 5],
+        ['expectedIdentifier' => 'y', 'expectedValue' => true],
+        ['expectedIdentifier' => 'foobar', 'expectedValue' => 'y'],
     ];
 
     foreach ($tests as $i => $test) {
+        /** @var LetStatement $stmt */
         $stmt = $program->statements[$i];
         expect(testLetStatement($stmt, $test['expectedIdentifier']))->toBeTrue();
+        $value = $stmt->value;
+        testLiteralExpression($value, $test['expectedValue']);
     }
 });
 
@@ -49,7 +52,7 @@ it('parses return statements correctly', function () {
     $input = <<<'EOT'
 return 5;
 return 10;
-return 993 322;
+return true;
 EOT;
 
     // Initialize the lexer and parser
@@ -67,6 +70,7 @@ EOT;
 
     // Loop through each statement to check that it's a ReturnStatement
     foreach ($program->statements as $stmt) {
+        /** @var ReturnStatement $stmt */
         expect($stmt)->toBeInstanceOf(ReturnStatement::class);
         expect($stmt->tokenLiteral())->toBe('return');
     }
@@ -416,8 +420,6 @@ it('parses expressions with correct operator precedence including call expressio
         expect($actual)->toBe($test['expected']);
     }
 });
-
-
 
 function checkParserErrors(Parser $parser): void
 {

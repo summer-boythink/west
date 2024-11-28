@@ -5,6 +5,7 @@ namespace Summer\West\Parser\Statement;
 use Summer\West\Ast\Identifier;
 use Summer\West\Ast\LetStatement;
 use Summer\West\Parser\Parser;
+use Summer\West\Parser\PrecedenceLevel;
 use Summer\West\Token\TokenType;
 
 class LetStatementParser implements IStatement
@@ -34,10 +35,13 @@ class LetStatementParser implements IStatement
 
             return null;
         }
+        $this->parser->next();
 
-        while (
-            $this->parser->getCurToken()->type !== TokenType::SEMICOLON &&
-            $this->parser->getCurToken()->type !== TokenType::EOF
+        $stmt->value = $this->parser->parseExpression(PrecedenceLevel::LOWEST);
+
+        if (
+            $this->parser->peekTokenIs(TokenType::SEMICOLON) ||
+            $this->parser->peekTokenIs(TokenType::EOF)
         ) {
             $this->parser->next();
         }

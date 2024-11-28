@@ -28,6 +28,7 @@ class CallArgumentsParser
         // 如果下一个 Token 是右括号，表示参数列表为空
         if ($this->parser->peekTokenIs(TokenType::RPAREN)) {
             $this->parser->next(); // 跳过右括号
+
             return $args;
         }
 
@@ -42,7 +43,7 @@ class CallArgumentsParser
         }
 
         // 验证是否有右括号
-        if (!$this->parser->expectPeek(TokenType::RPAREN)) {
+        if (! $this->parser->expectPeek(TokenType::RPAREN)) {
             return [];
         }
 

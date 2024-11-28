@@ -71,8 +71,8 @@ class Parser
         $this->registerPrefix(TokenType::TRUE, BooleanLiteralParser::class);
         $this->registerPrefix(TokenType::FALSE, BooleanLiteralParser::class);
         $this->registerPrefix(TokenType::LPAREN, GroupedExpressionParser::class);
-        $this->registerPrefix(TokenType::IF , IfExpressionParser::class);
-        $this->registerPrefix(TokenType::FUNCTION , FunctionLiteralParser::class);
+        $this->registerPrefix(TokenType::IF, IfExpressionParser::class);
+        $this->registerPrefix(TokenType::FUNCTION, FunctionLiteralParser::class);
 
         // 注册中缀解析函数
         $this->registerInfix(TokenType::PLUS, InfixExpressionParser::class);
@@ -163,7 +163,7 @@ class Parser
         /** @var Expression $leftExp */
         $leftExp = $prefix();
 
-        while (!$this->peekTokenIs(TokenType::SEMICOLON) && $precedence->value < $this->getPeekPrecedence()->value) {
+        while (! $this->peekTokenIs(TokenType::SEMICOLON) && $precedence->value < $this->getPeekPrecedence()->value) {
             $infix = $this->infixParseFns[$this->peekToken->type->name] ?? null;
             if ($infix === null) {
                 return $leftExp;
@@ -202,7 +202,6 @@ class Parser
 
         return $callArgumentsParser->parse();
     }
-
 
     public function curTokenIs(TokenType $type): bool
     {

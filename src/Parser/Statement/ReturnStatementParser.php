@@ -4,6 +4,7 @@ namespace Summer\West\Parser\Statement;
 
 use Summer\West\Ast\ReturnStatement;
 use Summer\West\Parser\Parser;
+use Summer\West\Parser\PrecedenceLevel;
 use Summer\West\Token\TokenType;
 
 class ReturnStatementParser implements IStatement
@@ -25,11 +26,12 @@ class ReturnStatementParser implements IStatement
 
         // Here we could parse an expression, but for now, we just skip until the semicolon
         // (Placeholder for expression parsing)
-        $returnValue = null;
+        $returnValue = $this->parser->parseExpression(PrecedenceLevel::LOWEST);
 
-        // Skip tokens until we encounter a semicolon
-        while ($this->parser->getCurToken()->type !== TokenType::SEMICOLON &&
-               $this->parser->getCurToken()->type !== TokenType::EOF) {
+        if (
+            $this->parser->peekTokenIs(TokenType::SEMICOLON) ||
+            $this->parser->peekTokenIs(TokenType::EOF)
+        ) {
             $this->parser->next();
         }
 
