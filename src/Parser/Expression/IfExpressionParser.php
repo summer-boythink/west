@@ -22,7 +22,7 @@ class IfExpressionParser implements IExpression
         $token = $this->parser->getCurToken();
 
         // 解析左括号
-        if (!$this->parser->expectPeek(TokenType::LPAREN)) {
+        if (! $this->parser->expectPeek(TokenType::LPAREN)) {
             return null;
         }
 
@@ -30,12 +30,12 @@ class IfExpressionParser implements IExpression
         $condition = $this->parser->parseExpression(PrecedenceLevel::LOWEST);
 
         // 解析右括号
-        if (!$this->parser->expectPeek(TokenType::RPAREN)) {
+        if (! $this->parser->expectPeek(TokenType::RPAREN)) {
             return null;
         }
 
         // 解析左大括号
-        if (!$this->parser->expectPeek(TokenType::LBRACE)) {
+        if (! $this->parser->expectPeek(TokenType::LBRACE)) {
             return null;
         }
 
@@ -43,9 +43,9 @@ class IfExpressionParser implements IExpression
 
         // 检查是否有 else 块
         $alternative = null;
-        if ($this->parser->peekTokenIs(TokenType::ELSE )) {
+        if ($this->parser->peekTokenIs(TokenType::ELSE)) {
             $this->parser->next(); // 跳过 else
-            if (!$this->parser->expectPeek(TokenType::LBRACE)) {
+            if (! $this->parser->expectPeek(TokenType::LBRACE)) {
                 return null;
             }
             $alternative = $this->parser->parseBlockStatement();

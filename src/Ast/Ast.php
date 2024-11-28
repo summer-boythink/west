@@ -230,6 +230,7 @@ class IfExpression extends BaseNode implements Expression
 
 class FunctionLiteral extends BaseNode implements Expression
 {
+    /** @var Identifier[] */
     public array $parameters;
 
     public BlockStatement $body;

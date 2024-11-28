@@ -5,6 +5,7 @@ namespace Tests;
 use Exception;
 use Summer\West\Ast\BooleanLiteral;
 use Summer\West\Ast\ExpressionStatement;
+use Summer\West\Ast\FunctionLiteral;
 use Summer\West\Ast\Identifier;
 use Summer\West\Ast\InfixExpression;
 use Summer\West\Ast\IntegerLiteral;
@@ -288,6 +289,75 @@ it('parses if expressions correctly with or without else', function () {
         $actual = (string) $program;
 
         expect($actual)->toBe($test['expected']);
+    }
+});
+
+it('parses function literals correctly', function () {
+    $input = 'fn(x, y) { x + y; }';
+
+    $lexer = new Lexer($input);
+    $parser = new Parser($lexer);
+
+    $program = $parser->parseProgram();
+    checkParserErrors($parser);
+
+    // 检查 Program 的 statements 数量是否正确
+    expect($program->statements)->toHaveCount(1);
+
+    // 验证第一个语句的类型
+    /** @var ExpressionStatement $stmt */
+    $stmt = $program->statements[0];
+    expect($stmt)->toBeInstanceOf(ExpressionStatement::class);
+
+    // 验证函数字面量
+    /** @var FunctionLiteral $function */
+    $function = $stmt->expression;
+    expect($function)->toBeInstanceOf(FunctionLiteral::class);
+
+    // 验证参数列表
+    expect($function->parameters)->toHaveCount(2);
+    testLiteralExpression($function->parameters[0], 'x');
+    testLiteralExpression($function->parameters[1], 'y');
+
+    // 验证函数体
+    expect($function->body->statements)->toHaveCount(1);
+
+    /** @var ExpressionStatement $bodyStmt */
+    $bodyStmt = $function->body->statements[0];
+    expect($bodyStmt)->toBeInstanceOf(ExpressionStatement::class);
+
+    // 验证函数体中的表达式
+    testInfixExpression($bodyStmt->expression, 'x', '+', 'y');
+});
+
+it('parses function parameters correctly', function () {
+    $tests = [
+        ['input' => 'fn() {};', 'expectedParameters' => []],
+        ['input' => 'fn(x) {};', 'expectedParameters' => ['x']],
+        ['input' => 'fn(x, y, z) {};', 'expectedParameters' => ['x', 'y', 'z']],
+    ];
+
+    foreach ($tests as $test) {
+        $lexer = new Lexer($test['input']);
+        $parser = new Parser($lexer);
+
+        $program = $parser->parseProgram();
+        checkParserErrors($parser);
+
+        /** @var ExpressionStatement $stmt */
+        $stmt = $program->statements[0];
+        expect($stmt)->toBeInstanceOf(ExpressionStatement::class);
+
+        /** @var FunctionLiteral $function */
+        $function = $stmt->expression;
+        expect($function)->toBeInstanceOf(FunctionLiteral::class);
+
+        // 验证参数数量和名称
+        expect($function->parameters)->toHaveCount(count($test['expectedParameters']));
+
+        foreach ($function->parameters as $index => $parameter) {
+            testIdentifier($parameter, $test['expectedParameters'][$index]);
+        }
     }
 });
 
