@@ -266,6 +266,31 @@ it('parses expressions with correct operator precedence including LPAREN', funct
     }
 });
 
+it('parses if expressions correctly with or without else', function () {
+    $tests = [
+        [
+            'input' => 'if (x < y) { x }',
+            'expected' => 'if ((x < y)) x',
+        ],
+        [
+            'input' => 'if (x < y) { x } else { y }',
+            'expected' => 'if ((x < y)) x else y',
+        ],
+    ];
+
+    foreach ($tests as $test) {
+        $lexer = new Lexer($test['input']);
+        $parser = new Parser($lexer);
+
+        $program = $parser->parseProgram();
+        checkParserErrors($parser);
+
+        $actual = (string) $program;
+
+        expect($actual)->toBe($test['expected']);
+    }
+});
+
 function checkParserErrors(Parser $parser): void
 {
     $errors = $parser->getErrors();

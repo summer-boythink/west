@@ -2,14 +2,17 @@
 
 namespace Summer\West\Parser;
 
+use Summer\West\Ast\BlockStatement;
 use Summer\West\Ast\Expression;
 use Summer\West\Ast\Program;
 use Summer\West\Ast\Statement;
 use Summer\West\Lexer\Lexer;
+use Summer\West\Parser\Expression\BlockStatementParser;
 use Summer\West\Parser\Expression\BooleanLiteralParser;
 use Summer\West\Parser\Expression\GroupedExpressionParser;
 use Summer\West\Parser\Expression\IdentifierParser;
 use Summer\West\Parser\Expression\IExpression;
+use Summer\West\Parser\Expression\IfExpressionParser;
 use Summer\West\Parser\Expression\IinfixExpression;
 use Summer\West\Parser\Expression\InfixExpressionParser;
 use Summer\West\Parser\Expression\IntegerLiteralParser;
@@ -63,6 +66,7 @@ class Parser
         $this->registerPrefix(TokenType::TRUE, BooleanLiteralParser::class);
         $this->registerPrefix(TokenType::FALSE, BooleanLiteralParser::class);
         $this->registerPrefix(TokenType::LPAREN, GroupedExpressionParser::class);
+        $this->registerPrefix(TokenType::IF, IfExpressionParser::class);
 
         // 注册中缀解析函数
         $this->registerInfix(TokenType::PLUS, InfixExpressionParser::class);
@@ -110,7 +114,7 @@ class Parser
         return $program;
     }
 
-    private function parseStatement(): ?Statement
+    public function parseStatement(): ?Statement
     {
         return match ($this->curToken->type) {
             TokenType::LET => $this->letParser->parse(),
@@ -163,6 +167,13 @@ class Parser
         }
 
         return $leftExp;
+    }
+
+    public function parseBlockStatement(): BlockStatement
+    {
+        $blockStatementParser = new BlockStatementParser($this);
+
+        return $blockStatementParser->parse();
     }
 
     public function curTokenIs(TokenType $type): bool
