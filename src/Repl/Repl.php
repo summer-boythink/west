@@ -3,8 +3,7 @@
 namespace Summer\West\Repl;
 
 use Summer\West\Lexer\Lexer;
-use Summer\West\Token\Token;
-use Summer\West\Token\TokenType;
+use Summer\West\Parser\Parser;
 
 class Repl
 {
@@ -12,37 +11,42 @@ class Repl
 
     public function start($in, $out)
     {
-        // Read input from stdin (or any stream) and write output to stdout (or any stream)
+        // Initialize the input scanner (similar to Go's bufio.Scanner)
         while (true) {
             // Print the prompt
             fwrite($out, self::PROMPT);
 
-            // Read a line of input
+            // Read the input line
             $line = fgets($in);
 
-            // If we reach the end of input (EOF), break out of the loop
+            // Exit if end of input (EOF) is encountered
             if ($line === false) {
                 break;
             }
 
-            // Create a new lexer instance and tokenize the input line
-            $lexer = new Lexer($line);
+            // Trim any extra whitespace from the input
+            $line = rtrim($line);
 
-            // Loop through the tokens produced by the lexer
-            while (($tok = $lexer->nextToken())->getType() !== TokenType::EOF) {
-                // Print the token in a more readable format
-                fwrite($out, $this->formatToken($tok)."\n");
+            // Tokenize the input using the lexer
+            $lexer = new Lexer($line);
+            $parser = new Parser($lexer);
+
+            // Parse the program and check for errors
+            $program = $parser->parseProgram();
+
+            if (count($parser->getErrors()) > 0) {
+                $this->printParserErrors($out, $parser->getErrors());
+            } else {
+                // If no errors, print the program's string representation
+                fwrite($out, $program->__toString()."\n");
             }
         }
     }
 
-    private function formatToken(Token $token)
+    private function printParserErrors($out, array $errors)
     {
-        // Here, you can adjust what properties of the token you want to display
-        return sprintf(
-            'Type: %-9s Literal: %s',
-            $token->getType()->name,
-            $token->getLiteral()
-        );
+        foreach ($errors as $error) {
+            fwrite($out, "\t$error\n");
+        }
     }
 }
