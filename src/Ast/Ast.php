@@ -118,7 +118,7 @@ class Identifier extends BaseNode implements Expression
     }
 }
 
-class Boolean extends BaseNode implements Expression
+class BooleanLiteral extends BaseNode implements Expression
 {
     public bool $value;
 

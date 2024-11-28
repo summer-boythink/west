@@ -6,6 +6,8 @@ use Summer\West\Ast\Expression;
 use Summer\West\Ast\Program;
 use Summer\West\Ast\Statement;
 use Summer\West\Lexer\Lexer;
+use Summer\West\Parser\Expression\BooleanLiteralParser;
+use Summer\West\Parser\Expression\GroupedExpressionParser;
 use Summer\West\Parser\Expression\IdentifierParser;
 use Summer\West\Parser\Expression\IExpression;
 use Summer\West\Parser\Expression\IinfixExpression;
@@ -58,6 +60,9 @@ class Parser
         $this->registerPrefix(TokenType::INT, IntegerLiteralParser::class);
         $this->registerPrefix(TokenType::BANG, PrefixExpressionParser::class);
         $this->registerPrefix(TokenType::MINUS, PrefixExpressionParser::class);
+        $this->registerPrefix(TokenType::TRUE, BooleanLiteralParser::class);
+        $this->registerPrefix(TokenType::FALSE, BooleanLiteralParser::class);
+        $this->registerPrefix(TokenType::LPAREN, GroupedExpressionParser::class);
 
         // 注册中缀解析函数
         $this->registerInfix(TokenType::PLUS, InfixExpressionParser::class);

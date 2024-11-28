@@ -2,6 +2,8 @@
 
 namespace Tests;
 
+use Exception;
+use Summer\West\Ast\BooleanLiteral;
 use Summer\West\Ast\ExpressionStatement;
 use Summer\West\Ast\Identifier;
 use Summer\West\Ast\InfixExpression;
@@ -84,11 +86,8 @@ it('parses identifier expressions correctly', function () {
     $stmt = $program->statements[0];
     expect($stmt)->toBeInstanceOf(ExpressionStatement::class);
 
-    /** @var Identifier $expression */
-    $expression = $stmt->expression;
-    expect($expression)->toBeInstanceOf(Identifier::class);
-    expect($expression->value)->toBe('foobar');
-    expect($expression->tokenLiteral())->toBe('foobar');
+    // 验证 Identifier
+    testIdentifier($stmt->expression, 'foobar');
 });
 
 it('parses integer literal expressions correctly', function () {
@@ -120,8 +119,10 @@ it('parses integer literal expressions correctly', function () {
 
 it('parses prefix expressions correctly', function () {
     $prefixTests = [
-        ['input' => '!5;', 'operator' => '!', 'integerValue' => 5],
-        ['input' => '-15;', 'operator' => '-', 'integerValue' => 15],
+        ['input' => '!5;', 'operator' => '!', 'value' => 5],
+        ['input' => '-15;', 'operator' => '-', 'value' => 15],
+        ['input' => '!true;', 'operator' => '!', 'value' => true],
+        ['input' => '!false;', 'operator' => '!', 'value' => false],
     ];
 
     foreach ($prefixTests as $test) {
@@ -148,11 +149,7 @@ it('parses prefix expressions correctly', function () {
         expect($expression->operator)->toBe($test['operator']);
 
         // 验证右侧表达式的值
-        /** @var IntegerLiteral $right */
-        $right = $expression->right;
-        expect($right)->toBeInstanceOf(IntegerLiteral::class);
-        expect($right->value)->toBe($test['integerValue']);
-        expect($right->tokenLiteral())->toBe((string) $test['integerValue']);
+        testLiteralExpression($expression->right, $test['value']);
     }
 });
 
@@ -166,6 +163,10 @@ it('parses infix expressions correctly', function () {
         ['input' => '5 < 5;', 'leftValue' => 5, 'operator' => '<', 'rightValue' => 5],
         ['input' => '5 == 5;', 'leftValue' => 5, 'operator' => '==', 'rightValue' => 5],
         ['input' => '5 != 5;', 'leftValue' => 5, 'operator' => '!=', 'rightValue' => 5],
+        ['input' => 'true == true;', 'leftValue' => true, 'operator' => '==', 'rightValue' => true],
+        ['input' => 'true != false;', 'leftValue' => true, 'operator' => '!=', 'rightValue' => false],
+        ['input' => 'false == false;', 'leftValue' => false, 'operator' => '==', 'rightValue' => false],
+        ['input' => 'a + b;', 'leftValue' => 'a', 'operator' => '+', 'rightValue' => 'b'],
     ];
 
     foreach ($infixTests as $test) {
@@ -188,14 +189,8 @@ it('parses infix expressions correctly', function () {
         $expression = $stmt->expression;
         expect($expression)->toBeInstanceOf(InfixExpression::class);
 
-        // 验证左侧表达式的值
-        testIntegerLiteral($expression->left, $test['leftValue']);
-
-        // 验证操作符
-        expect($expression->operator)->toBe($test['operator']);
-
-        // 验证右侧表达式的值
-        testIntegerLiteral($expression->right, $test['rightValue']);
+        // 使用通用的测试函数验证中缀表达式
+        testInfixExpression($expression, $test['leftValue'], $test['operator'], $test['rightValue']);
     }
 });
 
@@ -228,6 +223,49 @@ it('parses expressions with correct operator precedence', function () {
     }
 });
 
+it('parses expressions with correct operator precedence including booleans', function () {
+    $tests = [
+        ['input' => 'true', 'expected' => 'true'],
+        ['input' => 'false', 'expected' => 'false'],
+        ['input' => '3 > 5 == false', 'expected' => '((3 > 5) == false)'],
+        ['input' => '3 < 5 == true', 'expected' => '((3 < 5) == true)'],
+    ];
+
+    foreach ($tests as $test) {
+        $lexer = new Lexer($test['input']);
+        $parser = new Parser($lexer);
+
+        $program = $parser->parseProgram();
+        checkParserErrors($parser);
+
+        $actual = (string) $program;
+
+        expect($actual)->toBe($test['expected']);
+    }
+});
+
+it('parses expressions with correct operator precedence including LPAREN', function () {
+    $tests = [
+        ['input' => '1 + (2 + 3) + 4', 'expected' => '((1 + (2 + 3)) + 4)'],
+        ['input' => '(5 + 5) * 2', 'expected' => '((5 + 5) * 2)'],
+        ['input' => '2 / (5 + 5)', 'expected' => '(2 / (5 + 5))'],
+        ['input' => '-(5 + 5)', 'expected' => '(-(5 + 5))'],
+        ['input' => '!(true == true)', 'expected' => '(!(true == true))'],
+    ];
+
+    foreach ($tests as $test) {
+        $lexer = new Lexer($test['input']);
+        $parser = new Parser($lexer);
+
+        $program = $parser->parseProgram();
+        checkParserErrors($parser);
+
+        $actual = (string) $program;
+
+        expect($actual)->toBe($test['expected']);
+    }
+});
+
 function checkParserErrors(Parser $parser): void
 {
     $errors = $parser->getErrors();
@@ -245,6 +283,46 @@ function testIntegerLiteral($expression, int $expectedValue): void
     expect($expression)->toBeInstanceOf(IntegerLiteral::class);
     expect($expression->value)->toBe($expectedValue);
     expect($expression->tokenLiteral())->toBe((string) $expectedValue);
+}
+
+function testIdentifier($expression, string $expectedValue): void
+{
+    expect($expression)->toBeInstanceOf(Identifier::class);
+
+    /** @var Identifier $expression */
+    expect($expression->value)->toBe($expectedValue);
+    expect($expression->tokenLiteral())->toBe($expectedValue);
+}
+
+function testLiteralExpression($expression, $expected): void
+{
+    match (true) {
+        is_int($expected) => testIntegerLiteral($expression, $expected),
+        is_bool($expected) => testBooleanLiteral($expression, $expected),
+        is_string($expected) => testIdentifier($expression, $expected),
+        default => throw new Exception(
+            'Unsupported type for literal expression: '.get_debug_type($expected)
+        ),
+    };
+}
+
+function testInfixExpression($expression, $left, string $operator, $right): void
+{
+    expect($expression)->toBeInstanceOf(InfixExpression::class);
+
+    /** @var InfixExpression $expression */
+    testLiteralExpression($expression->left, $left);
+    expect($expression->operator)->toBe($operator);
+    testLiteralExpression($expression->right, $right);
+}
+
+function testBooleanLiteral($expression, bool $expectedValue): void
+{
+    expect($expression)->toBeInstanceOf(BooleanLiteral::class);
+
+    /** @var BooleanLiteral $expression */
+    expect($expression->value)->toBe($expectedValue);
+    expect($expression->tokenLiteral())->toBe($expectedValue ? 'true' : 'false');
 }
 
 function testLetStatement(LetStatement $stmt, string $name): bool
