@@ -4,6 +4,7 @@ namespace Tests;
 
 use Exception;
 use Summer\West\Ast\BooleanLiteral;
+use Summer\West\Ast\CallExpression;
 use Summer\West\Ast\ExpressionStatement;
 use Summer\West\Ast\FunctionLiteral;
 use Summer\West\Ast\Identifier;
@@ -360,6 +361,63 @@ it('parses function parameters correctly', function () {
         }
     }
 });
+
+it('parses call expressions correctly', function () {
+    $input = 'add(1, 2 * 3, 4 + 5);';
+
+    $lexer = new Lexer($input);
+    $parser = new Parser($lexer);
+
+    $program = $parser->parseProgram();
+    checkParserErrors($parser);
+
+    // 检查 Program 的 statements 数量是否正确
+    expect($program->statements)->toHaveCount(1);
+
+    // 检查第一个语句是否是 ExpressionStatement
+    /** @var ExpressionStatement $stmt */
+    $stmt = $program->statements[0];
+    expect($stmt)->toBeInstanceOf(ExpressionStatement::class);
+
+    // 检查表达式是否是 CallExpression
+    /** @var CallExpression $exp */
+    $exp = $stmt->expression;
+    expect($exp)->toBeInstanceOf(CallExpression::class);
+
+    // 验证函数部分是否是正确的标识符
+    testIdentifier($exp->function, 'add');
+
+    // 检查参数数量是否正确
+    expect($exp->arguments)->toHaveCount(3);
+
+    // 验证每个参数
+    testLiteralExpression($exp->arguments[0], 1);
+    testInfixExpression($exp->arguments[1], 2, '*', 3);
+    testInfixExpression($exp->arguments[2], 4, '+', 5);
+});
+
+it('parses expressions with correct operator precedence including call expressions', function () {
+    $tests = [
+        ['input' => 'a + add(b * c) + d', 'expected' => '((a + add((b * c))) + d)'],
+        ['input' => 'add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))', 'expected' => 'add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))'],
+        ['input' => 'add(a + b + c * d / f + g)', 'expected' => 'add((((a + b) + ((c * d) / f)) + g))'],
+    ];
+
+    foreach ($tests as $test) {
+        $lexer = new Lexer($test['input']);
+        $parser = new Parser($lexer);
+
+        $program = $parser->parseProgram();
+        checkParserErrors($parser);
+
+        $actual = (string) $program;
+
+        // 验证解析的输出是否符合预期
+        expect($actual)->toBe($test['expected']);
+    }
+});
+
+
 
 function checkParserErrors(Parser $parser): void
 {

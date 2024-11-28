@@ -10,6 +10,8 @@ use Summer\West\Ast\Statement;
 use Summer\West\Lexer\Lexer;
 use Summer\West\Parser\Expression\BlockStatementParser;
 use Summer\West\Parser\Expression\BooleanLiteralParser;
+use Summer\West\Parser\Expression\CallArgumentsParser;
+use Summer\West\Parser\Expression\CallExpressionParser;
 use Summer\West\Parser\Expression\FunctionLiteralParser;
 use Summer\West\Parser\Expression\FunctionParametersParser;
 use Summer\West\Parser\Expression\GroupedExpressionParser;
@@ -69,8 +71,8 @@ class Parser
         $this->registerPrefix(TokenType::TRUE, BooleanLiteralParser::class);
         $this->registerPrefix(TokenType::FALSE, BooleanLiteralParser::class);
         $this->registerPrefix(TokenType::LPAREN, GroupedExpressionParser::class);
-        $this->registerPrefix(TokenType::IF, IfExpressionParser::class);
-        $this->registerPrefix(TokenType::FUNCTION, FunctionLiteralParser::class);
+        $this->registerPrefix(TokenType::IF , IfExpressionParser::class);
+        $this->registerPrefix(TokenType::FUNCTION , FunctionLiteralParser::class);
 
         // 注册中缀解析函数
         $this->registerInfix(TokenType::PLUS, InfixExpressionParser::class);
@@ -81,6 +83,7 @@ class Parser
         $this->registerInfix(TokenType::NOT_EQ, InfixExpressionParser::class);
         $this->registerInfix(TokenType::LT, InfixExpressionParser::class);
         $this->registerInfix(TokenType::GT, InfixExpressionParser::class);
+        $this->registerInfix(TokenType::LPAREN, CallExpressionParser::class);
 
     }
 
@@ -160,7 +163,7 @@ class Parser
         /** @var Expression $leftExp */
         $leftExp = $prefix();
 
-        while (! $this->peekTokenIs(TokenType::SEMICOLON) && $precedence->value < $this->getPeekPrecedence()->value) {
+        while (!$this->peekTokenIs(TokenType::SEMICOLON) && $precedence->value < $this->getPeekPrecedence()->value) {
             $infix = $this->infixParseFns[$this->peekToken->type->name] ?? null;
             if ($infix === null) {
                 return $leftExp;
@@ -189,6 +192,17 @@ class Parser
 
         return $functionParametersParser->parse();
     }
+
+    /**
+     * @return Expression[]
+     */
+    public function parseCallArguments(): array
+    {
+        $callArgumentsParser = new CallArgumentsParser($this);
+
+        return $callArgumentsParser->parse();
+    }
+
 
     public function curTokenIs(TokenType $type): bool
     {

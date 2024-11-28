@@ -256,6 +256,7 @@ class CallExpression extends BaseNode implements Expression
 {
     public Expression $function;
 
+    /** @var Expression[] */
     public array $arguments;
 
     public function __construct(Token $token, Expression $function, array $arguments)
