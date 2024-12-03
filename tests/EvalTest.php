@@ -4,7 +4,7 @@ namespace Tests;
 
 use Summer\West\Evaluator\Evaluator;
 use Summer\West\Lexer\Lexer;
-use Summer\West\Object\Integer;
+use Summer\West\Object\WestInteger;
 use Summer\West\Object\WestObject;
 use Summer\West\Parser\Parser;
 
@@ -40,7 +40,7 @@ function testEval(string $input): ?WestObject
  */
 function testIntegerObject(WestObject $obj, int $expected)
 {
-    /** @var int $obj */
-    expect($obj)->toBeInstanceOf(Integer::class);  // Expecting Integer object
+    /** @var WestInteger $obj */
+    expect($obj)->toBeInstanceOf(WestInteger::class);  // Expecting Integer object
     expect($obj->value)->toBe($expected);  // Expect the value to match the expected
 }

@@ -2,6 +2,7 @@
 
 namespace Summer\West\Repl;
 
+use Summer\West\Evaluator\Evaluator;
 use Summer\West\Lexer\Lexer;
 use Summer\West\Parser\Parser;
 
@@ -37,8 +38,13 @@ class Repl
             if (count($parser->getErrors()) > 0) {
                 $this->printParserErrors($out, $parser->getErrors());
             } else {
-                // If no errors, print the program's string representation
-                fwrite($out, $program->__toString()."\n");
+                // If no errors, evaluate the program and print the result
+                $evaluated = Evaluator::eval($program);
+
+                // Print the result if it is not null
+                if ($evaluated !== null) {
+                    fwrite($out, $evaluated->inspect()."\n");
+                }
             }
         }
     }

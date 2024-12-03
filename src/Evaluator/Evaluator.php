@@ -6,7 +6,7 @@ use Summer\West\Ast\ExpressionStatement;
 use Summer\West\Ast\IntegerLiteral;
 use Summer\West\Ast\Node;
 use Summer\West\Ast\Program;
-use Summer\West\Object\Integer;
+use Summer\West\Object\WestInteger;
 use Summer\West\Object\WestObject;
 
 class Evaluator
@@ -16,7 +16,7 @@ class Evaluator
         return match (true) {
             $node instanceof Program => self::evalStatements($node->statements),
             $node instanceof ExpressionStatement => self::eval($node->expression),
-            $node instanceof IntegerLiteral => new Integer($node->value),
+            $node instanceof IntegerLiteral => new WestInteger($node->value),
             default => null,
         };
     }

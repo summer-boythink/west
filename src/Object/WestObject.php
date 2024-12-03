@@ -27,7 +27,7 @@ interface WestObject
     public function inspect(): string;
 }
 
-class Integer implements WestObject
+class WestInteger implements WestObject
 {
     public int $value;
 
@@ -47,7 +47,7 @@ class Integer implements WestObject
     }
 }
 
-class Boolean implements WestObject
+class WestBoolean implements WestObject
 {
     public bool $value;
 
