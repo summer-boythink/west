@@ -41,7 +41,7 @@ EOT;
     foreach ($tests as $i => $test) {
         /** @var LetStatement $stmt */
         $stmt = $program->statements[$i];
-        expect(testLetStatement($stmt, $test['expectedIdentifier']))->toBeTrue();
+        testLetStatement($stmt, $test['expectedIdentifier']);
         $value = $stmt->value;
         testLiteralExpression($value, $test['expectedValue']);
     }
@@ -480,12 +480,10 @@ function testBooleanLiteral($expression, bool $expectedValue): void
     expect($expression->tokenLiteral())->toBe($expectedValue ? 'true' : 'false');
 }
 
-function testLetStatement(LetStatement $stmt, string $name): bool
+function testLetStatement(LetStatement $stmt, string $name): void
 {
     expect($stmt)->toBeInstanceOf(LetStatement::class);
     expect($stmt->tokenLiteral())->toBe('let');
     expect($stmt->name->value)->toBe($name);
     expect($stmt->name->tokenLiteral())->toBe($name);
-
-    return true;
 }

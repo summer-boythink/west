@@ -6,7 +6,8 @@
             "Tests\\": "tests/"
         },
         "classmap": [
-            "src/Ast/"
+            "src/Ast/",
+            "src/Object/"
         ]
     },
     "authors": [

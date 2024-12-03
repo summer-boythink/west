@@ -4,7 +4,7 @@ namespace Summer\West\Ast;
 
 use Summer\West\Token\Token;
 
-class Program
+class Program implements Node
 {
     /** @var Statement[] */
     public array $statements = [];
