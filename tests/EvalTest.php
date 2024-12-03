@@ -4,6 +4,7 @@ namespace Tests;
 
 use Summer\West\Evaluator\Evaluator;
 use Summer\West\Lexer\Lexer;
+use Summer\West\Object\WestBoolean;
 use Summer\West\Object\WestInteger;
 use Summer\West\Object\WestObject;
 use Summer\West\Parser\Parser;
@@ -14,6 +15,28 @@ it('evaluates integer expressions correctly', function (string $input, int $expe
 })->with([
     ['5', 5],
     ['10', 10],
+    ['-5', -5],
+    ['-10', -10],
+]);
+
+it('evaluates boolean expressions correctly', function (string $input, bool $expected) {
+    $evaluated = testEval($input);
+    testBooleanObject($evaluated, $expected);
+})->with([
+    ['true', true],
+    ['false', false],
+]);
+
+it('evaluates bang operator correctly', function (string $input, bool $expected) {
+    $evaluated = testEval($input);
+    testBooleanObject($evaluated, $expected);
+})->with([
+    ['!true', false],
+    ['!false', true],
+    ['!5', false],
+    ['!!true', true],
+    ['!!false', false],
+    ['!!5', true],
 ]);
 
 /**
@@ -43,4 +66,17 @@ function testIntegerObject(WestObject $obj, int $expected)
     /** @var WestInteger $obj */
     expect($obj)->toBeInstanceOf(WestInteger::class);  // Expecting Integer object
     expect($obj->value)->toBe($expected);  // Expect the value to match the expected
+}
+
+/**
+ * Tests if the evaluated object is a Boolean and matches the expected value.
+ *
+ * @param  WestObject  $obj  The evaluated object.
+ * @param  bool  $expected  The expected boolean value.
+ */
+function testBooleanObject($obj, bool $expected)
+{
+    /** @var WestBoolean $obj */
+    expect($obj)->toBeInstanceOf(WestBoolean::class);
+    expect($obj->value)->toBe($expected);
 }

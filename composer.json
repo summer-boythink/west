@@ -28,6 +28,9 @@
         }
     },
     "scripts":{
-        "start":"@php bin/main.php"
+        "start":"@php bin/main.php",
+        "dump-autoload":"composer dump-autoload",
+        "fmt":"./vendor/bin/pint",
+        "test":"./vendor/bin/pest"
     }
 }

@@ -67,7 +67,7 @@ class WestBoolean implements WestObject
     }
 }
 
-class NullObject implements WestObject
+class WestNull implements WestObject
 {
     public function type(): string
     {
