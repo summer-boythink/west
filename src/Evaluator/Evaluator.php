@@ -4,11 +4,13 @@ namespace Summer\West\Evaluator;
 
 use Summer\West\Ast\BooleanLiteral;
 use Summer\West\Ast\ExpressionStatement;
+use Summer\West\Ast\InfixExpression;
 use Summer\West\Ast\IntegerLiteral;
 use Summer\West\Ast\Node;
 use Summer\West\Ast\PrefixExpression;
 use Summer\West\Ast\Program;
 use Summer\West\Object\WestBoolean;
+use Summer\West\Object\WestError;
 use Summer\West\Object\WestInteger;
 use Summer\West\Object\WestNull;
 use Summer\West\Object\WestObject;
@@ -30,6 +32,7 @@ class Evaluator
             $node instanceof IntegerLiteral => new WestInteger($node->value),
             $node instanceof BooleanLiteral => new WestBoolean($node->value ? self::TRUE : self::FALSE),
             $node instanceof PrefixExpression => self::evalPrefixExpression($node),
+            $node instanceof InfixExpression => self::evalInfixExpression($node),
             default => null,
         };
     }
@@ -60,6 +63,46 @@ class Evaluator
             '-' => self::evalMinusPrefixOperatorExpression($right),
             default => self::NULL,
         };
+    }
+
+    private static function evalInfixExpression(InfixExpression $node): ?WestObject
+    {
+        $left = self::eval($node->left);
+        $right = self::eval($node->right);
+
+        if ($left === null || $right === null) {
+            return self::NULL;
+        }
+
+        return match (true) {
+            $left instanceof WestInteger && $right instanceof WestInteger => self::evalIntegerInfixExpression($node->operator, $left, $right),
+            $node->operator === '==' => new WestBoolean($left == $right),
+            $node->operator === '!=' => new WestBoolean($left != $right),
+            $left::class !== $right::class => new WestError("type mismatch: {$left->type()} {$node->operator} {$right->type()}"),
+            default => new WestError("unknown operator: {$left->type()} {$node->operator} {$right->type()}"),
+        };
+    }
+
+    private static function evalIntegerInfixExpression(string $operator, ?WestObject $left, ?WestObject $right): ?WestObject
+    {
+        if ($left instanceof WestInteger && $right instanceof WestInteger) {
+            $leftVal = $left->value;
+            $rightVal = $right->value;
+
+            return match ($operator) {
+                '+' => new WestInteger($leftVal + $rightVal),
+                '-' => new WestInteger($leftVal - $rightVal),
+                '*' => new WestInteger($leftVal * $rightVal),
+                '/' => new WestInteger($leftVal / $rightVal),
+                '<' => new WestBoolean($leftVal < $rightVal),
+                '>' => new WestBoolean($leftVal > $rightVal),
+                '==' => new WestBoolean($leftVal == $rightVal),
+                '!=' => new WestBoolean($leftVal != $rightVal),
+                default => self::NULL,
+            };
+        }
+
+        return self::NULL;
     }
 
     private static function evalBangOperatorExpression(?WestObject $right): ?WestObject

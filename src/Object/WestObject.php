@@ -100,7 +100,7 @@ class ReturnValue implements WestObject
     }
 }
 
-class ErrorObject implements WestObject
+class WestError implements WestObject
 {
     public string $message;
 
