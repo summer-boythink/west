@@ -80,7 +80,7 @@ class WestNull implements WestObject
     }
 }
 
-class ReturnValue implements WestObject
+class WestReturnValue implements WestObject
 {
     public object $value;
 

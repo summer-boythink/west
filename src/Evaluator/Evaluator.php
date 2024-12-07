@@ -11,11 +11,13 @@ use Summer\West\Ast\IntegerLiteral;
 use Summer\West\Ast\Node;
 use Summer\West\Ast\PrefixExpression;
 use Summer\West\Ast\Program;
+use Summer\West\Ast\ReturnStatement;
 use Summer\West\Object\WestBoolean;
 use Summer\West\Object\WestError;
 use Summer\West\Object\WestInteger;
 use Summer\West\Object\WestNull;
 use Summer\West\Object\WestObject;
+use Summer\West\Object\WestReturnValue;
 
 class Evaluator
 {
@@ -29,24 +31,52 @@ class Evaluator
     public static function eval(Node $node): ?WestObject
     {
         return match (true) {
-            $node instanceof Program => self::evalStatements($node->statements),
+            $node instanceof Program => self::evalProgram($node->statements),
             $node instanceof ExpressionStatement => self::eval($node->expression),
             $node instanceof IntegerLiteral => new WestInteger($node->value),
             $node instanceof BooleanLiteral => new WestBoolean($node->value ? self::TRUE : self::FALSE),
             $node instanceof PrefixExpression => self::evalPrefixExpression($node),
             $node instanceof InfixExpression => self::evalInfixExpression($node),
-            $node instanceof BlockStatement => self::evalStatements($node->statements),
+            $node instanceof BlockStatement => self::evalBlockStatement($node),
             $node instanceof IfExpression => self::evalIfExpression($node),
+            $node instanceof ReturnStatement => self::evalReturnStatement($node),
             default => null,
         };
     }
 
-    private static function evalStatements(array $statements): ?WestObject
+    private static function evalReturnStatement(ReturnStatement $node): ?WestObject
+    {
+        $value = self::eval($node->returnValue);
+
+        return new WestReturnValue($value);
+    }
+
+    private static function evalProgram(array $statements): ?WestObject
     {
         $result = null;
 
         foreach ($statements as $statement) {
             $result = self::eval($statement);
+
+            if ($result instanceof WestReturnValue) {
+                return $result->value;
+            }
+        }
+
+        return $result;
+    }
+
+    private static function evalBlockStatement(BlockStatement $block): ?WestObject
+    {
+        $result = null;
+
+        foreach ($block->statements as $statement) {
+            $result = self::eval($statement);
+
+            // 检查返回值对象
+            if ($result !== null && $result instanceof WestReturnValue) {
+                return $result;
+            }
         }
 
         return $result;

@@ -75,7 +75,28 @@ it('evaluates if-else expressions correctly', function (string $input, mixed $ex
     ['if (1 > 2) { 10 }', null],
     ['if (1 > 2) { 10 } else { 20 }', 20],
     ['if (1 < 2) { 10 } else { 20 }', 10],
+]);
 
+it('evaluates return statements correctly', function (string $input, int $expected) {
+    $evaluated = testEval($input);
+    testIntegerObject($evaluated, $expected);
+})->with([
+    ['return 10;', 10],
+    ['return 10; 9;', 10],
+    ['return 2 * 5; 9;', 10],
+    ['9; return 2 * 5; 9;', 10],
+    [
+        '
+if (10 > 1) {
+  if (10 > 1) {
+    return 10;
+  }
+
+  return 1;
+}
+',
+        10,
+    ],
 ]);
 
 /**
