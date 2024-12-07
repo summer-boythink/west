@@ -59,6 +59,35 @@ it('evaluates bang operator correctly', function (string $input, bool $expected)
     ['(1 > 2) == false', true],
 ]);
 
+it('evaluates if-else expressions correctly', function (string $input, mixed $expected) {
+    $evaluated = testEval($input);
+
+    if (is_int($expected)) {
+        testIntegerObject($evaluated, $expected);
+    } else {
+        testNullObject($evaluated);
+    }
+})->with([
+    ['if (true) { 10 }', 10],
+    ['if (false) { 10 }', null],
+    ['if (1) { 10 }', 10],
+    ['if (1 < 2) { 10 }', 10],
+    ['if (1 > 2) { 10 }', null],
+    ['if (1 > 2) { 10 } else { 20 }', 20],
+    ['if (1 < 2) { 10 } else { 20 }', 10],
+
+]);
+
+/**
+ * Tests if the evaluated object is NULL.
+ *
+ * @param  WestObject|null  $obj  The evaluated object.
+ */
+function testNullObject(?WestObject $obj)
+{
+    expect($obj)->toBeNull();  // Expect the object to be null
+}
+
 /**
  * Evaluates the input and returns the resulting WestObject.
  *

@@ -2,8 +2,10 @@
 
 namespace Summer\West\Evaluator;
 
+use Summer\West\Ast\BlockStatement;
 use Summer\West\Ast\BooleanLiteral;
 use Summer\West\Ast\ExpressionStatement;
+use Summer\West\Ast\IfExpression;
 use Summer\West\Ast\InfixExpression;
 use Summer\West\Ast\IntegerLiteral;
 use Summer\West\Ast\Node;
@@ -33,6 +35,8 @@ class Evaluator
             $node instanceof BooleanLiteral => new WestBoolean($node->value ? self::TRUE : self::FALSE),
             $node instanceof PrefixExpression => self::evalPrefixExpression($node),
             $node instanceof InfixExpression => self::evalInfixExpression($node),
+            $node instanceof BlockStatement => self::evalStatements($node->statements),
+            $node instanceof IfExpression => self::evalIfExpression($node),
             default => null,
         };
     }
@@ -50,7 +54,6 @@ class Evaluator
 
     private static function evalPrefixExpression(PrefixExpression $node): ?WestObject
     {
-        // 评估表达式的右侧部分
         $right = self::eval($node->right);
 
         return self::evalPrefixOperatorExpression($node->operator, $right);
@@ -130,5 +133,27 @@ class Evaluator
 
         // 如果操作数不是整数，返回 NULL
         return self::NULL;
+    }
+
+    private static function evalIfExpression(IfExpression $node): ?WestObject
+    {
+        $condition = self::eval($node->condition);
+
+        if (self::isTruthy($condition)) {
+            return self::eval($node->consequence);
+        } elseif ($node->alternative !== null) {
+            return self::eval($node->alternative);
+        } else {
+            return self::NULL;
+        }
+    }
+
+    private static function isTruthy(?WestObject $obj): bool
+    {
+        return match (true) {
+            $obj instanceof WestNull => false,
+            $obj instanceof WestBoolean && ! $obj->value => false,
+            default => true,
+        };
     }
 }
