@@ -5,6 +5,7 @@ namespace Tests;
 use Summer\West\Evaluator\Evaluator;
 use Summer\West\Lexer\Lexer;
 use Summer\West\Object\WestBoolean;
+use Summer\West\Object\WestError;
 use Summer\West\Object\WestInteger;
 use Summer\West\Object\WestObject;
 use Summer\West\Parser\Parser;
@@ -96,6 +97,35 @@ if (10 > 1) {
 }
 ',
         10,
+    ],
+]);
+
+it('handles errors correctly', function (string $input, string $expectedMessage) {
+    $evaluated = testEval($input);
+
+    // Ensure the result is an instance of WestError
+    expect($evaluated)->toBeInstanceOf(WestError::class);
+
+    /** @var WestError $evaluated */
+    expect($evaluated->message)->toBe($expectedMessage);
+})->with([
+    ['5 + true;', 'type mismatch: INTEGER + BOOLEAN'],
+    ['5 + true; 5;', 'type mismatch: INTEGER + BOOLEAN'],
+    ['-true', 'unknown operator: -BOOLEAN'],
+    ['true + false;', 'unknown operator: BOOLEAN + BOOLEAN'],
+    ['5; true + false; 5', 'unknown operator: BOOLEAN + BOOLEAN'],
+    ['if (10 > 1) { true + false; }', 'unknown operator: BOOLEAN + BOOLEAN'],
+    [
+        '
+if (10 > 1) {
+  if (10 > 1) {
+    return true + false;
+  }
+
+  return 1;
+}
+',
+        'unknown operator: BOOLEAN + BOOLEAN',
     ],
 ]);
 

@@ -12,6 +12,7 @@ use Summer\West\Ast\Node;
 use Summer\West\Ast\PrefixExpression;
 use Summer\West\Ast\Program;
 use Summer\West\Ast\ReturnStatement;
+use Summer\West\Object\ObjectType;
 use Summer\West\Object\WestBoolean;
 use Summer\West\Object\WestError;
 use Summer\West\Object\WestInteger;
@@ -28,9 +29,14 @@ class Evaluator
 
     private const FALSE = false;
 
+    private static function isError(?WestObject $obj): bool
+    {
+        return $obj instanceof WestError;
+    }
+
     public static function eval(Node $node): ?WestObject
     {
-        return match (true) {
+        $result = match (true) {
             $node instanceof Program => self::evalProgram($node->statements),
             $node instanceof ExpressionStatement => self::eval($node->expression),
             $node instanceof IntegerLiteral => new WestInteger($node->value),
@@ -42,6 +48,13 @@ class Evaluator
             $node instanceof ReturnStatement => self::evalReturnStatement($node),
             default => null,
         };
+
+        // 检查是否为错误对象
+        if (self::isError($result)) {
+            return $result;  // 提前返回错误对象，跳出方法
+        }
+
+        return $result;
     }
 
     private static function evalReturnStatement(ReturnStatement $node): ?WestObject
@@ -60,6 +73,8 @@ class Evaluator
 
             if ($result instanceof WestReturnValue) {
                 return $result->value;
+            } elseif ($result instanceof WestError) {
+                return $result;
             }
         }
 
@@ -74,8 +89,13 @@ class Evaluator
             $result = self::eval($statement);
 
             // 检查返回值对象
-            if ($result !== null && $result instanceof WestReturnValue) {
-                return $result;
+            if ($result !== null) {
+                if (
+                    $result->type() == ObjectType::RETURN_VALUE_OBJ
+                    || $result->type() == ObjectType::ERROR_OBJ
+                ) {
+                    return $result;
+                }
             }
         }
 
@@ -94,7 +114,7 @@ class Evaluator
         return match ($operator) {
             '!' => self::evalBangOperatorExpression($right),
             '-' => self::evalMinusPrefixOperatorExpression($right),
-            default => self::NULL,
+            default => self::newError('unknown operator: %s%s', $operator, $right->type()),
         };
     }
 
@@ -107,17 +127,22 @@ class Evaluator
             return self::NULL;
         }
 
+        // 如果类型不匹配，返回类型错误
+        if ($left::class !== $right::class) {
+            return self::newError('type mismatch: %s %s %s', $left->type(), $node->operator, $right->type());
+        }
+
         return match (true) {
             $left instanceof WestInteger && $right instanceof WestInteger => self::evalIntegerInfixExpression($node->operator, $left, $right),
             $node->operator === '==' => new WestBoolean($left == $right),
             $node->operator === '!=' => new WestBoolean($left != $right),
-            $left::class !== $right::class => new WestError("type mismatch: {$left->type()} {$node->operator} {$right->type()}"),
-            default => new WestError("unknown operator: {$left->type()} {$node->operator} {$right->type()}"),
+            default => self::newError('unknown operator: %s %s %s', $left->type(), $node->operator, $right->type()),
         };
     }
 
     private static function evalIntegerInfixExpression(string $operator, ?WestObject $left, ?WestObject $right): ?WestObject
     {
+        // 确保左右操作数都是整数类型
         if ($left instanceof WestInteger && $right instanceof WestInteger) {
             $leftVal = $left->value;
             $rightVal = $right->value;
@@ -126,16 +151,17 @@ class Evaluator
                 '+' => new WestInteger($leftVal + $rightVal),
                 '-' => new WestInteger($leftVal - $rightVal),
                 '*' => new WestInteger($leftVal * $rightVal),
-                '/' => new WestInteger($leftVal / $rightVal),
+                '/' => $rightVal !== 0 ? new WestInteger($leftVal / $rightVal) : self::newError('division by zero'),
                 '<' => new WestBoolean($leftVal < $rightVal),
                 '>' => new WestBoolean($leftVal > $rightVal),
                 '==' => new WestBoolean($leftVal == $rightVal),
                 '!=' => new WestBoolean($leftVal != $rightVal),
-                default => self::NULL,
+                default => self::newError('unknown operator: %s %s %s', $left->type(), $operator, $right->type()),
             };
         }
 
-        return self::NULL;
+        // 如果操作数不是整数类型，返回类型不匹配的错误
+        return self::newError('type mismatch: %s %s %s', $left?->type() ?? 'null', $operator, $right?->type() ?? 'null');
     }
 
     private static function evalBangOperatorExpression(?WestObject $right): ?WestObject
@@ -156,20 +182,22 @@ class Evaluator
 
     private static function evalMinusPrefixOperatorExpression(?WestObject $right): ?WestObject
     {
-        // 处理前缀负号（-）操作符
+        // 检查右操作数是否为整数类型
         if ($right instanceof WestInteger) {
             return new WestInteger(-$right->value);
         }
 
-        // 如果操作数不是整数，返回 NULL
-        return self::NULL;
+        // 如果操作数不是整数类型，返回明确的错误对象
+        return self::newError('unknown operator: -%s', $right?->type() ?? 'null');
     }
 
     private static function evalIfExpression(IfExpression $node): ?WestObject
     {
         $condition = self::eval($node->condition);
 
-        if (self::isTruthy($condition)) {
+        if (self::isError($condition)) {
+            return $condition;
+        } elseif (self::isTruthy($condition)) {
             return self::eval($node->consequence);
         } elseif ($node->alternative !== null) {
             return self::eval($node->alternative);
@@ -185,5 +213,16 @@ class Evaluator
             $obj instanceof WestBoolean && ! $obj->value => false,
             default => true,
         };
+    }
+
+    /**
+     * 创建错误对象
+     *
+     * @param  string  $format  错误格式
+     * @param  mixed  ...$args  错误参数
+     */
+    private static function newError(string $format, ...$args): WestError
+    {
+        return new WestError(sprintf($format, ...$args));
     }
 }
