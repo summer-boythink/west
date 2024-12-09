@@ -4,6 +4,7 @@ namespace Summer\West\Repl;
 
 use Summer\West\Evaluator\Evaluator;
 use Summer\West\Lexer\Lexer;
+use Summer\West\Object\Environment;
 use Summer\West\Parser\Parser;
 
 class Repl
@@ -12,6 +13,7 @@ class Repl
 
     public function start($in, $out)
     {
+        $env = new Environment;
         // Initialize the input scanner (similar to Go's bufio.Scanner)
         while (true) {
             // Print the prompt
@@ -39,7 +41,7 @@ class Repl
                 $this->printParserErrors($out, $parser->getErrors());
             } else {
                 // If no errors, evaluate the program and print the result
-                $evaluated = Evaluator::eval($program);
+                $evaluated = Evaluator::eval($program, $env);
 
                 // Print the result if it is not null
                 if ($evaluated !== null) {

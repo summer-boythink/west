@@ -5,13 +5,16 @@ namespace Summer\West\Evaluator;
 use Summer\West\Ast\BlockStatement;
 use Summer\West\Ast\BooleanLiteral;
 use Summer\West\Ast\ExpressionStatement;
+use Summer\West\Ast\Identifier;
 use Summer\West\Ast\IfExpression;
 use Summer\West\Ast\InfixExpression;
 use Summer\West\Ast\IntegerLiteral;
+use Summer\West\Ast\LetStatement;
 use Summer\West\Ast\Node;
 use Summer\West\Ast\PrefixExpression;
 use Summer\West\Ast\Program;
 use Summer\West\Ast\ReturnStatement;
+use Summer\West\Object\Environment;
 use Summer\West\Object\ObjectType;
 use Summer\West\Object\WestBoolean;
 use Summer\West\Object\WestError;
@@ -34,42 +37,46 @@ class Evaluator
         return $obj instanceof WestError;
     }
 
-    public static function eval(Node $node): ?WestObject
+    public static function eval(Node $node, Environment $env): ?WestObject
     {
         $result = match (true) {
-            $node instanceof Program => self::evalProgram($node->statements),
-            $node instanceof ExpressionStatement => self::eval($node->expression),
+            $node instanceof Program => self::evalProgram($node->statements, $env),
+            $node instanceof BlockStatement => self::evalBlockStatement($node, $env),
+            $node instanceof ExpressionStatement => self::eval($node->expression, $env),
+            $node instanceof ReturnStatement => self::evalReturnStatement($node, $env),
+            $node instanceof LetStatement => self::evalLetStatement($node, $env),
+            $node instanceof Identifier => self::evalIdentifier($node, $env),
             $node instanceof IntegerLiteral => new WestInteger($node->value),
             $node instanceof BooleanLiteral => new WestBoolean($node->value ? self::TRUE : self::FALSE),
-            $node instanceof PrefixExpression => self::evalPrefixExpression($node),
-            $node instanceof InfixExpression => self::evalInfixExpression($node),
-            $node instanceof BlockStatement => self::evalBlockStatement($node),
-            $node instanceof IfExpression => self::evalIfExpression($node),
-            $node instanceof ReturnStatement => self::evalReturnStatement($node),
+            $node instanceof PrefixExpression => self::evalPrefixExpression($node, $env),
+            $node instanceof InfixExpression => self::evalInfixExpression($node, $env),
+            $node instanceof IfExpression => self::evalIfExpression($node, $env),
             default => null,
         };
 
-        // 检查是否为错误对象
         if (self::isError($result)) {
-            return $result;  // 提前返回错误对象，跳出方法
+            return $result;
         }
 
         return $result;
     }
 
-    private static function evalReturnStatement(ReturnStatement $node): ?WestObject
+    private static function evalReturnStatement(ReturnStatement $node, Environment $env): ?WestObject
     {
-        $value = self::eval($node->returnValue);
+        $value = self::eval($node->returnValue, $env);
+        if (self::isError($value)) {
+            return $value;
+        }
 
         return new WestReturnValue($value);
     }
 
-    private static function evalProgram(array $statements): ?WestObject
+    private static function evalProgram(array $statements, Environment $env): ?WestObject
     {
         $result = null;
 
         foreach ($statements as $statement) {
-            $result = self::eval($statement);
+            $result = self::eval($statement, $env);
 
             if ($result instanceof WestReturnValue) {
                 return $result->value;
@@ -81,19 +88,15 @@ class Evaluator
         return $result;
     }
 
-    private static function evalBlockStatement(BlockStatement $block): ?WestObject
+    private static function evalBlockStatement(BlockStatement $block, Environment $env): ?WestObject
     {
         $result = null;
 
         foreach ($block->statements as $statement) {
-            $result = self::eval($statement);
+            $result = self::eval($statement, $env);
 
-            // 检查返回值对象
             if ($result !== null) {
-                if (
-                    $result->type() == ObjectType::RETURN_VALUE_OBJ
-                    || $result->type() == ObjectType::ERROR_OBJ
-                ) {
+                if ($result->type() === ObjectType::RETURN_VALUE_OBJ || $result->type() === ObjectType::ERROR_OBJ) {
                     return $result;
                 }
             }
@@ -102,9 +105,34 @@ class Evaluator
         return $result;
     }
 
-    private static function evalPrefixExpression(PrefixExpression $node): ?WestObject
+    private static function evalIdentifier(Identifier $node, Environment $env): ?WestObject
     {
-        $right = self::eval($node->right);
+        $value = $env->get($node->value);
+        if ($value === null) {
+            return self::newError('identifier not found: '.$node->value);
+        }
+
+        return $value;
+    }
+
+    private static function evalLetStatement(LetStatement $node, Environment $env): ?WestObject
+    {
+        $value = self::eval($node->value, $env);
+        if (self::isError($value)) {
+            return $value;
+        }
+
+        $env->set($node->name->value, $value);
+
+        return null;
+    }
+
+    private static function evalPrefixExpression(PrefixExpression $node, Environment $env): ?WestObject
+    {
+        $right = self::eval($node->right, $env);
+        if (self::isError($right)) {
+            return $right;
+        }
 
         return self::evalPrefixOperatorExpression($node->operator, $right);
     }
@@ -118,10 +146,10 @@ class Evaluator
         };
     }
 
-    private static function evalInfixExpression(InfixExpression $node): ?WestObject
+    private static function evalInfixExpression(InfixExpression $node, Environment $env): ?WestObject
     {
-        $left = self::eval($node->left);
-        $right = self::eval($node->right);
+        $left = self::eval($node->left, $env);
+        $right = self::eval($node->right, $env);
 
         if ($left === null || $right === null) {
             return self::NULL;
@@ -191,16 +219,16 @@ class Evaluator
         return self::newError('unknown operator: -%s', $right?->type() ?? 'null');
     }
 
-    private static function evalIfExpression(IfExpression $node): ?WestObject
+    private static function evalIfExpression(IfExpression $node, Environment $env): ?WestObject
     {
-        $condition = self::eval($node->condition);
+        $condition = self::eval($node->condition, $env);
 
         if (self::isError($condition)) {
             return $condition;
         } elseif (self::isTruthy($condition)) {
-            return self::eval($node->consequence);
+            return self::eval($node->consequence, $env);
         } elseif ($node->alternative !== null) {
-            return self::eval($node->alternative);
+            return self::eval($node->alternative, $env);
         } else {
             return self::NULL;
         }

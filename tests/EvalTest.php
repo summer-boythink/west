@@ -4,6 +4,7 @@ namespace Tests;
 
 use Summer\West\Evaluator\Evaluator;
 use Summer\West\Lexer\Lexer;
+use Summer\West\Object\Environment;
 use Summer\West\Object\WestBoolean;
 use Summer\West\Object\WestError;
 use Summer\West\Object\WestInteger;
@@ -129,6 +130,18 @@ if (10 > 1) {
     ],
 ]);
 
+it('evaluates let statements correctly', function (string $input, int $expected) {
+    $evaluated = testEval($input);
+    testIntegerObject($evaluated, $expected);
+})->with(
+    [
+        ['let a = 5; a;', 5],
+        ['let a = 5 * 5; a;', 25],
+        ['let a = 5; let b = a; b;', 5],
+        ['let a = 5; let b = a; let c = a + b + 5; c;', 15],
+    ]
+);
+
 /**
  * Tests if the evaluated object is NULL.
  *
@@ -150,9 +163,10 @@ function testEval(string $input): ?WestObject
     $lexer = new Lexer($input);
     $parser = new Parser($lexer);
     $program = $parser->parseProgram();
+    $env = new Environment;
 
     // Using the Evaluator to evaluate the program
-    return Evaluator::eval($program);
+    return Evaluator::eval($program, $env);
 }
 
 /**

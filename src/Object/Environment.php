@@ -4,6 +4,11 @@ namespace Summer\West\Object;
 
 class Environment
 {
+    /**
+     * store WestObject
+     *
+     * @var WestObject[]
+     */
     private array $store = [];
 
     private ?Environment $outer;
@@ -32,17 +37,17 @@ class Environment
      * @param  string  $name  The name of the variable.
      * @return array [Object|null, bool] Returns the value and whether it was found.
      */
-    public function get(string $name): array
+    public function get(string $name): ?WestObject
     {
         if (array_key_exists($name, $this->store)) {
-            return [$this->store[$name], true];
+            return $this->store[$name];
         }
 
         if ($this->outer !== null) {
             return $this->outer->get($name);
         }
 
-        return [null, false];
+        return null;
     }
 
     /**
