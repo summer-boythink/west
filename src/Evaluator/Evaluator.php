@@ -17,6 +17,7 @@ use Summer\West\Ast\PrefixExpression;
 use Summer\West\Ast\Program;
 use Summer\West\Ast\ReturnStatement;
 use Summer\West\Ast\StringLiteral;
+use Summer\West\Object\Builtin;
 use Summer\West\Object\Environment;
 use Summer\West\Object\ObjectType;
 use Summer\West\Object\WestBoolean;
@@ -37,6 +38,20 @@ class Evaluator
 
     private const FALSE = false;
 
+    /**
+     * 内置函数映射。
+     *
+     * @var array<string, Builtin>
+     */
+    private static array $builtins = [];
+
+    public static function initializeBuiltins(): void
+    {
+        if (empty(self::$builtins)) {
+            self::$builtins = Builtins::getBuiltins();
+        }
+    }
+
     private static function isError(?WestObject $obj): bool
     {
         return $obj instanceof WestError;
@@ -44,6 +59,7 @@ class Evaluator
 
     public static function eval(Node $node, Environment $env): ?WestObject
     {
+        self::initializeBuiltins();
         $result = match (true) {
             $node instanceof Program => self::evalProgram($node->statements, $env),
             $node instanceof BlockStatement => self::evalBlockStatement($node, $env),
@@ -129,16 +145,18 @@ class Evaluator
         return $result;
     }
 
-    private static function applyFunction(WestObject $fn, array $args): ?WestObject
+    private static function applyFunction(WestObject $fn, array $args): WestObject
     {
         if ($fn instanceof WestFunction) {
             $extendedEnv = self::extendFunctionEnv($fn, $args);
             $evaluated = self::eval($fn->body, $extendedEnv);
 
             return self::unwrapReturnValue($evaluated);
+        } elseif ($fn instanceof Builtin) {
+            return call_user_func_array($fn->fn, $args);
+        } else {
+            return self::newError('not a function: %s', $fn->type());
         }
-
-        return self::newError('not a function: %s', $fn->type());
     }
 
     /**
@@ -187,11 +205,15 @@ class Evaluator
     private static function evalIdentifier(Identifier $node, Environment $env): ?WestObject
     {
         $value = $env->get($node->value);
-        if ($value === null) {
-            return self::newError('identifier not found: '.$node->value);
+        if ($value != null) {
+            return $value;
         }
 
-        return $value;
+        if (isset(self::$builtins[$node->value])) {
+            return self::$builtins[$node->value];
+        }
+
+        return self::newError("identifier not found: {$node->value}");
     }
 
     private static function evalLetStatement(LetStatement $node, Environment $env): ?WestObject

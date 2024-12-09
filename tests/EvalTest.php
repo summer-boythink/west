@@ -211,6 +211,14 @@ it('handles errors correctly with bad adds', function (string $input, string $ex
     ['"Hello" - "World"', 'unknown operator: STRING - STRING'],
 ]);
 
+it('calls built-in functions correctly', function () {
+    $input = 'len("Hello")';
+
+    $evaluated = testEval($input);
+    /** @var WestInteger $evaluated */
+    expect($evaluated)->toBeInstanceOf(WestInteger::class);
+    expect($evaluated->value)->toBe(5);
+});
 /**
  * Tests if the evaluated object is a WestFunction and matches the expected parameters and body.
  *

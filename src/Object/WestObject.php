@@ -7,6 +7,8 @@ use Summer\West\Ast\Identifier;
 
 abstract class ObjectType
 {
+    public const VOID_OBJ = 'VOID';
+
     public const NULL_OBJ = 'NULL';
 
     public const ERROR_OBJ = 'ERROR';
@@ -20,13 +22,15 @@ abstract class ObjectType
     public const RETURN_VALUE_OBJ = 'RETURN_VALUE';
 
     public const FUNCTION_OBJ = 'FUNCTION';
+
+    public const BUILTIN_OBJ = 'BUILTIN';
 }
 
 interface WestObject
 {
     public function type(): string;
 
-    public function inspect(): string;
+    public function inspect(): ?string;
 }
 
 class WestInteger implements WestObject
@@ -102,6 +106,19 @@ class WestNull implements WestObject
     }
 }
 
+class WestVoid implements WestObject
+{
+    public function type(): string
+    {
+        return ObjectType::VOID_OBJ;
+    }
+
+    public function inspect(): ?string
+    {
+        return null;
+    }
+}
+
 class WestReturnValue implements WestObject
 {
     public object $value;
@@ -174,5 +191,43 @@ class WestFunction implements WestObject
         $out .= '}';
 
         return $out;
+    }
+}
+
+class Builtin implements WestObject
+{
+    /**
+     * @var callable
+     */
+    public $fn;
+
+    /**
+     * 构造函数
+     *
+     * @param  callable  $fn  内置函数的可调用对象
+     */
+    public function __construct(callable $fn)
+    {
+        $this->fn = $fn;
+    }
+
+    /**
+     * 获取对象的类型
+     *
+     * @return string 'BUILTIN'
+     */
+    public function type(): string
+    {
+        return ObjectType::BUILTIN_OBJ;
+    }
+
+    /**
+     * 获取对象的字符串表示
+     *
+     * @return string "builtin function"
+     */
+    public function inspect(): string
+    {
+        return 'builtin function';
     }
 }
