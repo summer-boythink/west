@@ -7,7 +7,7 @@ use Summer\West\Lexer\Lexer;
 use Summer\West\Object\Environment;
 use Summer\West\Parser\Parser;
 
-class Repl
+class ConsoleRepl
 {
     const PROMPT = '>> ';
 
