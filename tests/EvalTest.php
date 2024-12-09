@@ -7,6 +7,7 @@ use Summer\West\Lexer\Lexer;
 use Summer\West\Object\Environment;
 use Summer\West\Object\WestBoolean;
 use Summer\West\Object\WestError;
+use Summer\West\Object\WestFunction;
 use Summer\West\Object\WestInteger;
 use Summer\West\Object\WestObject;
 use Summer\West\Parser\Parser;
@@ -141,6 +142,61 @@ it('evaluates let statements correctly', function (string $input, int $expected)
         ['let a = 5; let b = a; let c = a + b + 5; c;', 15],
     ]
 );
+
+it('evaluates function objects correctly', function () {
+    $input = 'fn(x) { x + 2; }';
+
+    $evaluated = testEval($input);
+    testFunctionObject($evaluated, ['x'], '(x + 2)');
+});
+
+it('evaluates function applications correctly', function (string $input, int $expected) {
+    $evaluated = testEval($input);
+    testIntegerObject($evaluated, $expected);
+})->with([
+    ['let identity = fn(x) { x; }; identity(5);', 5],
+    ['let identity = fn(x) { return x; }; identity(5);', 5],
+    ['let double = fn(x) { x * 2; }; double(5);', 10],
+    ['let add = fn(x, y) { x + y; }; add(5, 5);', 10],
+    ['let add = fn(x, y) { x + y; }; add(5 + 5, add(5, 5));', 20],
+    ['fn(x) { x; }(5)', 5],
+]);
+
+it('evaluates closures correctly', function () {
+    $input = '
+let newAdder = fn(x) {
+  fn(y) { x + y };
+};
+
+let addTwo = newAdder(2);
+addTwo(2);
+';
+
+    $evaluated = testEval($input);
+    testIntegerObject($evaluated, 4);
+});
+
+/**
+ * Tests if the evaluated object is a WestFunction and matches the expected parameters and body.
+ *
+ * @param  string[]  $expectedParams
+ */
+function testFunctionObject(WestObject $obj, array $expectedParams, string $expectedBody)
+{
+    expect($obj)->toBeInstanceOf(WestFunction::class);
+
+    // Check parameters count
+    /** @var WestFunction $obj */
+    expect(count($obj->parameters))->toBe(count($expectedParams));
+
+    // Check each parameter name
+    foreach ($expectedParams as $index => $expectedParam) {
+        expect($obj->parameters[$index]->value)->toBe($expectedParam);
+    }
+
+    // Check body
+    expect((string) $obj->body)->toBe($expectedBody);
+}
 
 /**
  * Tests if the evaluated object is NULL.

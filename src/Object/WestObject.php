@@ -120,9 +120,12 @@ class WestError implements WestObject
     }
 }
 
-class FunctionObject implements WestObject
+class WestFunction implements WestObject
 {
-    public array $parameters; // Array of Identifier
+    /**
+     * @var Identifier[]
+     */
+    public array $parameters;
 
     public BlockStatement $body;
 

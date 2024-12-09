@@ -4,7 +4,9 @@ namespace Summer\West\Evaluator;
 
 use Summer\West\Ast\BlockStatement;
 use Summer\West\Ast\BooleanLiteral;
+use Summer\West\Ast\CallExpression;
 use Summer\West\Ast\ExpressionStatement;
+use Summer\West\Ast\FunctionLiteral;
 use Summer\West\Ast\Identifier;
 use Summer\West\Ast\IfExpression;
 use Summer\West\Ast\InfixExpression;
@@ -18,6 +20,7 @@ use Summer\West\Object\Environment;
 use Summer\West\Object\ObjectType;
 use Summer\West\Object\WestBoolean;
 use Summer\West\Object\WestError;
+use Summer\West\Object\WestFunction;
 use Summer\West\Object\WestInteger;
 use Summer\West\Object\WestNull;
 use Summer\West\Object\WestObject;
@@ -51,6 +54,9 @@ class Evaluator
             $node instanceof PrefixExpression => self::evalPrefixExpression($node, $env),
             $node instanceof InfixExpression => self::evalInfixExpression($node, $env),
             $node instanceof IfExpression => self::evalIfExpression($node, $env),
+            $node instanceof FunctionLiteral => new WestFunction($node->parameters, $node->body, $env),
+            $node instanceof CallExpression => self::evalCallExpression($node, $env),
+
             default => null,
         };
 
@@ -86,6 +92,76 @@ class Evaluator
         }
 
         return $result;
+    }
+
+    private static function evalCallExpression(CallExpression $node, Environment $env): ?WestObject
+    {
+        $function = self::eval($node->function, $env);
+        if (self::isError($function)) {
+            return $function;
+        }
+
+        $args = self::evalExpressions($node->arguments, $env);
+        if (count($args) === 1 && self::isError($args[0])) {
+            return $args[0];
+        }
+
+        return self::applyFunction($function, $args);
+    }
+
+    /**
+     * 批量求值参数表达式
+     */
+    private static function evalExpressions(array $expressions, Environment $env): array
+    {
+        $result = [];
+        foreach ($expressions as $exp) {
+            $evaluated = self::eval($exp, $env);
+            if (self::isError($evaluated)) {
+                return [$evaluated];
+            }
+            $result[] = $evaluated;
+        }
+
+        return $result;
+    }
+
+    private static function applyFunction(WestObject $fn, array $args): ?WestObject
+    {
+        if ($fn instanceof WestFunction) {
+            $extendedEnv = self::extendFunctionEnv($fn, $args);
+            $evaluated = self::eval($fn->body, $extendedEnv);
+
+            return self::unwrapReturnValue($evaluated);
+        }
+
+        return self::newError('not a function: %s', $fn->type());
+    }
+
+    /**
+     * 扩展函数调用环境
+     */
+    private static function extendFunctionEnv(WestFunction $fn, array $args): Environment
+    {
+        $env = Environment::newEnclosedEnvironment($fn->env);
+
+        foreach ($fn->parameters as $paramIdx => $param) {
+            $env->set($param->value, $args[$paramIdx]);
+        }
+
+        return $env;
+    }
+
+    /**
+     * 展开返回值，如果是 WestReturnValue 则返回其内部值
+     */
+    private static function unwrapReturnValue(?WestObject $obj): ?WestObject
+    {
+        if ($obj instanceof WestReturnValue) {
+            return $obj->value;
+        }
+
+        return $obj;
     }
 
     private static function evalBlockStatement(BlockStatement $block, Environment $env): ?WestObject
