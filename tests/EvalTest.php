@@ -10,6 +10,7 @@ use Summer\West\Object\WestError;
 use Summer\West\Object\WestFunction;
 use Summer\West\Object\WestInteger;
 use Summer\West\Object\WestObject;
+use Summer\West\Object\WestString;
 use Summer\West\Parser\Parser;
 
 it('evaluates integer expressions correctly', function (string $input, int $expected) {
@@ -175,6 +176,21 @@ addTwo(2);
     $evaluated = testEval($input);
     testIntegerObject($evaluated, 4);
 });
+
+it('parses string literals correctly', function (string $input, string $expected) {
+
+    $evaluated = testEval($input);
+
+    // Ensure the result is a WestString object
+    expect($evaluated)->toBeInstanceOf(WestString::class);
+
+    /** @var WestString $evaluated */
+    expect($evaluated->value)->toBe($expected);
+})->with([
+    ['"hello world";', 'hello world'],
+    ['"foobar";', 'foobar'],
+    ['"foo bar";', 'foo bar'],
+]);
 
 /**
  * Tests if the evaluated object is a WestFunction and matches the expected parameters and body.

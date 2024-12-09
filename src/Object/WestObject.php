@@ -13,6 +13,8 @@ abstract class ObjectType
 
     public const INTEGER_OBJ = 'INTEGER';
 
+    public const STRING_OBJ = 'STRING';
+
     public const BOOLEAN_OBJ = 'BOOLEAN';
 
     public const RETURN_VALUE_OBJ = 'RETURN_VALUE';
@@ -39,6 +41,26 @@ class WestInteger implements WestObject
     public function type(): string
     {
         return ObjectType::INTEGER_OBJ;
+    }
+
+    public function inspect(): string
+    {
+        return (string) $this->value;
+    }
+}
+
+class WestString implements WestObject
+{
+    public string $value;
+
+    public function __construct(string $value)
+    {
+        $this->value = $value;
+    }
+
+    public function type(): string
+    {
+        return ObjectType::STRING_OBJ;
     }
 
     public function inspect(): string

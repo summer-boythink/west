@@ -16,6 +16,7 @@ use Summer\West\Ast\Node;
 use Summer\West\Ast\PrefixExpression;
 use Summer\West\Ast\Program;
 use Summer\West\Ast\ReturnStatement;
+use Summer\West\Ast\StringLiteral;
 use Summer\West\Object\Environment;
 use Summer\West\Object\ObjectType;
 use Summer\West\Object\WestBoolean;
@@ -25,6 +26,7 @@ use Summer\West\Object\WestInteger;
 use Summer\West\Object\WestNull;
 use Summer\West\Object\WestObject;
 use Summer\West\Object\WestReturnValue;
+use Summer\West\Object\WestString;
 
 class Evaluator
 {
@@ -50,6 +52,7 @@ class Evaluator
             $node instanceof LetStatement => self::evalLetStatement($node, $env),
             $node instanceof Identifier => self::evalIdentifier($node, $env),
             $node instanceof IntegerLiteral => new WestInteger($node->value),
+            $node instanceof StringLiteral => new WestString($node->value),
             $node instanceof BooleanLiteral => new WestBoolean($node->value ? self::TRUE : self::FALSE),
             $node instanceof PrefixExpression => self::evalPrefixExpression($node, $env),
             $node instanceof InfixExpression => self::evalInfixExpression($node, $env),

@@ -136,6 +136,37 @@ class BooleanLiteral extends BaseNode implements Expression
     }
 }
 
+class StringLiteral extends BaseNode implements Expression
+{
+    public Token $token;
+
+    public string $value;
+
+    public function __construct(Token $token, string $value)
+    {
+        $this->token = $token;
+        $this->value = $value;
+    }
+
+    public function expressionNode() {}
+
+    /**
+     * Returns the literal value of the token
+     */
+    public function tokenLiteral(): string
+    {
+        return $this->token->literal;
+    }
+
+    /**
+     * Returns the string representation of the node
+     */
+    public function __toString(): string
+    {
+        return $this->token->literal;
+    }
+}
+
 class IntegerLiteral extends BaseNode implements Expression
 {
     public ?int $value;

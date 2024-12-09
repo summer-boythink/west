@@ -100,6 +100,9 @@ class Lexer
                 $tok = $this->newToken(TokenType::RPAREN, $this->ch);
                 break;
 
+            case '"':
+                $tok = $this->newToken(TokenType::STRING, $this->readString());
+                break;
             case '':
                 // End of input reached, return EOF token
                 return new Token(TokenType::EOF, '');
@@ -133,6 +136,19 @@ class Lexer
         while (in_array($this->ch, [' ', "\t", "\n", "\r"])) {
             $this->readChar();
         }
+    }
+
+    private function readString(): string
+    {
+        $position = $this->position + 1;
+        while (true) {
+            $this->readChar();
+            if ($this->ch === '"' || $this->ch === 0) {
+                break;
+            }
+        }
+
+        return substr($this->input, $position, $this->position - $position);
     }
 
     private function readChar(): void

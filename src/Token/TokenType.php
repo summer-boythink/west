@@ -40,4 +40,6 @@ enum TokenType: string
     case IF = 'IF';
     case ELSE = 'ELSE';
     case RETURN = 'RETURN';
+
+    case STRING = 'STRING';
 }

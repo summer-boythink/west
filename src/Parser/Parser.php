@@ -22,6 +22,7 @@ use Summer\West\Parser\Expression\IinfixExpression;
 use Summer\West\Parser\Expression\InfixExpressionParser;
 use Summer\West\Parser\Expression\IntegerLiteralParser;
 use Summer\West\Parser\Expression\PrefixExpressionParser;
+use Summer\West\Parser\Expression\StringLiteralParser;
 use Summer\West\Parser\Statement\ExpressionStatementParser;
 use Summer\West\Parser\Statement\LetStatementParser;
 use Summer\West\Parser\Statement\ReturnStatementParser;
@@ -73,6 +74,7 @@ class Parser
         $this->registerPrefix(TokenType::LPAREN, GroupedExpressionParser::class);
         $this->registerPrefix(TokenType::IF, IfExpressionParser::class);
         $this->registerPrefix(TokenType::FUNCTION, FunctionLiteralParser::class);
+        $this->registerPrefix(TokenType::STRING, StringLiteralParser::class);
 
         // 注册中缀解析函数
         $this->registerInfix(TokenType::PLUS, InfixExpressionParser::class);

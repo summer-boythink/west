@@ -13,6 +13,7 @@ use Summer\West\Ast\IntegerLiteral;
 use Summer\West\Ast\LetStatement;
 use Summer\West\Ast\PrefixExpression;
 use Summer\West\Ast\ReturnStatement;
+use Summer\West\Ast\StringLiteral;
 use Summer\West\Lexer\Lexer;
 use Summer\West\Parser\Parser;
 
@@ -94,6 +95,32 @@ it('parses identifier expressions correctly', function () {
 
     // 验证 Identifier
     testIdentifier($stmt->expression, 'foobar');
+});
+
+it('parses string literal expressions correctly', function () {
+    $input = '"hello world";';
+
+    $lexer = new Lexer($input);
+    $parser = new Parser($lexer);
+
+    $program = $parser->parseProgram();
+    checkParserErrors($parser);
+    // 确保 Program 有一个语句
+    expect($program->statements)->toHaveCount(1);
+
+    // 获取第一个语句并检查其类型
+    /** @var ExpressionStatement $stmt */
+    $stmt = $program->statements[0];
+    expect($stmt)->toBeInstanceOf(ExpressionStatement::class);
+
+    // 获取表达式并检查其类型
+    /** @var StringLiteral $expression */
+    $expression = $stmt->expression;
+    expect($expression)->toBeInstanceOf(StringLiteral::class);
+
+    // 验证整数值和 TokenLiteral
+    expect($expression->value)->toBe('hello world');
+    expect($expression->tokenLiteral())->toBe('hello world');
 });
 
 it('parses integer literal expressions correctly', function () {
