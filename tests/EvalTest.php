@@ -190,6 +190,25 @@ it('parses string literals correctly', function (string $input, string $expected
     ['"hello world";', 'hello world'],
     ['"foobar";', 'foobar'],
     ['"foo bar";', 'foo bar'],
+    ['"Hello" + " " + "World!"', 'Hello World!'],
+]);
+
+it('handles errors correctly with bad adds', function (string $input, string $expectedMessage) {
+    $evaluated = testEval($input);
+
+    // 确保评估结果是 WestError 对象
+    expect($evaluated)->toBeInstanceOf(WestError::class);
+
+    /** @var WestError $evaluated */
+    expect($evaluated->message)->toBe($expectedMessage);
+})->with([
+    ['5 + true;', 'type mismatch: INTEGER + BOOLEAN'],
+    ['5 + true; 5;', 'type mismatch: INTEGER + BOOLEAN'],
+    ['-true', 'unknown operator: -BOOLEAN'],
+    ['true + false;', 'unknown operator: BOOLEAN + BOOLEAN'],
+    ['5; true + false; 5', 'unknown operator: BOOLEAN + BOOLEAN'],
+    ['if (10 > 1) { true + false; }', 'unknown operator: BOOLEAN + BOOLEAN'],
+    ['"Hello" - "World"', 'unknown operator: STRING - STRING'],
 ]);
 
 /**

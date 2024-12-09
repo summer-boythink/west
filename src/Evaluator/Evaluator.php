@@ -241,10 +241,23 @@ class Evaluator
 
         return match (true) {
             $left instanceof WestInteger && $right instanceof WestInteger => self::evalIntegerInfixExpression($node->operator, $left, $right),
+            $left instanceof WestString && $right instanceof WestString => self::evalStringInfixExpression($node->operator, $left, $right),
             $node->operator === '==' => new WestBoolean($left == $right),
             $node->operator === '!=' => new WestBoolean($left != $right),
             default => self::newError('unknown operator: %s %s %s', $left->type(), $node->operator, $right->type()),
         };
+    }
+
+    private static function evalStringInfixExpression(string $operator, WestString $left, WestString $right): ?WestObject
+    {
+        if ($operator !== '+') {
+            return self::newError('unknown operator: %s %s %s', $left->type(), $operator, $right->type());
+        }
+
+        $leftVal = $left->value;
+        $rightVal = $right->value;
+
+        return new WestString($leftVal.$rightVal);
     }
 
     private static function evalIntegerInfixExpression(string $operator, ?WestObject $left, ?WestObject $right): ?WestObject
