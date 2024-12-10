@@ -29,6 +29,7 @@ class Builtins
         self::$builtins = [
             'len' => new Builtin([self::class, 'lenBuiltin']),
             'print' => new Builtin([self::class, 'echoBuiltin']),
+            'println' => new Builtin([self::class, 'printlnBuiltin']),
         ];
     }
 
@@ -71,12 +72,38 @@ class Builtins
     {
         $output = '';
         foreach ($args as $arg) {
-            $output .= $arg->value;
+            /**
+             * @var WestObject $arg
+             */
+            $output .= $arg->inspect();
         }
 
-        // 输出结果（这里我们假设直接输出到终端或日志）
+        // 使用正则表达式查找并直接处理换行符
+        $output = preg_replace('/\\\\r/', "\r", $output); // 替换 '\r' 为换行符
+        $output = preg_replace('/\\\\n/', "\n", $output); // 替换 '\n' 为换行符
+
+        // 输出处理后的结果
         echo $output;
 
-        return new WestVoid; // 可以返回输出长度作为示例
+        return new WestVoid; // 返回一个空的 WestVoid 对象，表示没有返回值
+    }
+
+    /**
+     * 内置函数 println 的实现
+     */
+    public static function printlnBuiltin(WestObject ...$args): WestObject
+    {
+        $output = '';
+        foreach ($args as $arg) {
+            /**
+             * @var WestObject $arg
+             */
+            $output .= $arg->inspect();
+        }
+
+        // 输出结果并换行
+        echo $output.PHP_EOL;
+
+        return new WestVoid; // 返回一个空的 WestVoid 对象，表示没有返回值
     }
 }
