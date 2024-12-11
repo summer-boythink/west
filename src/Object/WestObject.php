@@ -24,6 +24,8 @@ abstract class ObjectType
     public const FUNCTION_OBJ = 'FUNCTION';
 
     public const BUILTIN_OBJ = 'BUILTIN';
+
+    public const ARRAY_OBJ = 'ARRAY';
 }
 
 interface WestObject
@@ -191,6 +193,49 @@ class WestFunction implements WestObject
         $out .= '}';
 
         return $out;
+    }
+}
+
+class WestArray implements WestObject
+{
+    /**
+     * @var WestObject[] 元素数组
+     */
+    public array $elements;
+
+    /**
+     * 构造函数
+     *
+     * @param  WestObject[]  $elements  数组中的元素
+     */
+    public function __construct(array $elements)
+    {
+        $this->elements = $elements;
+    }
+
+    /**
+     * 获取对象的类型
+     *
+     * @return string 'ARRAY'
+     */
+    public function type(): string
+    {
+        return ObjectType::ARRAY_OBJ;
+    }
+
+    /**
+     * 获取对象的字符串表示
+     *
+     * @return string 字符串形式的数组
+     */
+    public function inspect(): string
+    {
+        $elementStrings = array_map(
+            fn (WestObject $element) => $element->inspect(),
+            $this->elements
+        );
+
+        return '['.implode(', ', $elementStrings).']';
     }
 }
 

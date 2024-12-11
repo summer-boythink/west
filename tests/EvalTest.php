@@ -5,6 +5,8 @@ namespace Tests;
 use Summer\West\Evaluator\Evaluator;
 use Summer\West\Lexer\Lexer;
 use Summer\West\Object\Environment;
+use Summer\West\Object\ObjectType;
+use Summer\West\Object\WestArray;
 use Summer\West\Object\WestBoolean;
 use Summer\West\Object\WestError;
 use Summer\West\Object\WestFunction;
@@ -193,6 +195,49 @@ it('parses string literals correctly', function (string $input, string $expected
     ['"Hello" + " " + "World!"', 'Hello World!'],
 ]);
 
+it('evaluates array literals correctly', function () {
+    $input = '[1, 2 * 2, 3 + 3]';
+
+    $evaluated = testEval($input);
+
+    // Ensure the result is a WestArray object
+    expect($evaluated)->toBeInstanceOf(WestArray::class);
+
+    /** @var WestArray $evaluated */
+    $elements = $evaluated->elements;
+
+    // Check the number of elements in the array
+    expect($elements)->toHaveCount(3);
+
+    // Validate each element in the array
+    testIntegerObject($elements[0], 1);
+    testIntegerObject($elements[1], 4);
+    testIntegerObject($elements[2], 6);
+});
+
+it('evaluates array index expressions correctly', function (string $input, mixed $expected) {
+    $evaluated = testEval($input);
+
+    if (is_int($expected)) {
+        // 如果预期值是整数，检查结果是否为正确的 WestInteger 对象
+        testIntegerObject($evaluated, $expected);
+    } else {
+        // 如果预期值是 null，检查结果是否为 null
+        testNullObject($evaluated);
+    }
+})->with([
+    ['[1, 2, 3][0]', 1],
+    ['[1, 2, 3][1]', 2],
+    ['[1, 2, 3][2]', 3],
+    ['let i = 0; [1][i];', 1],
+    ['[1, 2, 3][1 + 1];', 3],
+    ['let myArray = [1, 2, 3]; myArray[2];', 3],
+    ['let myArray = [1, 2, 3]; myArray[0] + myArray[1] + myArray[2];', 6],
+    ['let myArray = [1, 2, 3]; let i = myArray[0]; myArray[i]', 2],
+    ['[1, 2, 3][3]', null],
+    ['[1, 2, 3][-1]', null],
+]);
+
 it('handles errors correctly with bad adds', function (string $input, string $expectedMessage) {
     $evaluated = testEval($input);
 
@@ -248,7 +293,7 @@ function testFunctionObject(WestObject $obj, array $expectedParams, string $expe
  */
 function testNullObject(?WestObject $obj)
 {
-    expect($obj)->toBeNull();  // Expect the object to be null
+    expect($obj->type())->toBe(ObjectType::NULL_OBJ);  // Expect the object to be null
 }
 
 /**

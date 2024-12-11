@@ -2,6 +2,7 @@
 
 namespace Summer\West\Evaluator;
 
+use Summer\West\Ast\ArrayLiteral;
 use Summer\West\Ast\BlockStatement;
 use Summer\West\Ast\BooleanLiteral;
 use Summer\West\Ast\CallExpression;
@@ -9,6 +10,7 @@ use Summer\West\Ast\ExpressionStatement;
 use Summer\West\Ast\FunctionLiteral;
 use Summer\West\Ast\Identifier;
 use Summer\West\Ast\IfExpression;
+use Summer\West\Ast\IndexExpression;
 use Summer\West\Ast\InfixExpression;
 use Summer\West\Ast\IntegerLiteral;
 use Summer\West\Ast\LetStatement;
@@ -20,6 +22,7 @@ use Summer\West\Ast\StringLiteral;
 use Summer\West\Object\Builtin;
 use Summer\West\Object\Environment;
 use Summer\West\Object\ObjectType;
+use Summer\West\Object\WestArray;
 use Summer\West\Object\WestBoolean;
 use Summer\West\Object\WestError;
 use Summer\West\Object\WestFunction;
@@ -75,7 +78,8 @@ class Evaluator
             $node instanceof IfExpression => self::evalIfExpression($node, $env),
             $node instanceof FunctionLiteral => new WestFunction($node->parameters, $node->body, $env),
             $node instanceof CallExpression => self::evalCallExpression($node, $env),
-
+            $node instanceof ArrayLiteral => self::evalArrayLiteral($node, $env),
+            $node instanceof IndexExpression => self::evalIndexExpression($node, $env),
             default => null,
         };
 
@@ -253,7 +257,7 @@ class Evaluator
         $right = self::eval($node->right, $env);
 
         if ($left === null || $right === null) {
-            return self::NULL;
+            return new WestNull;
         }
 
         // 如果类型不匹配，返回类型错误
@@ -333,6 +337,53 @@ class Evaluator
         return self::newError('unknown operator: -%s', $right?->type() ?? 'null');
     }
 
+    private static function evalArrayLiteral(ArrayLiteral $node, Environment $env): ?WestObject
+    {
+        $elements = self::evalExpressions($node->elements, $env);
+        if (count($elements) === 1 && self::isError($elements[0])) {
+            return $elements[0];
+        }
+
+        return new WestArray($elements);
+    }
+
+    private static function evalIndexExpression(IndexExpression $node, Environment $env): ?WestObject
+    {
+        $left = self::eval($node->left, $env);
+        if (self::isError($left)) {
+            return $left;
+        }
+
+        $index = self::eval($node->index, $env);
+        if (self::isError($index)) {
+            return $index;
+        }
+
+        return self::evalIndex(left: $left, index: $index);
+    }
+
+    private static function evalIndex(WestObject $left, WestObject $index): ?WestObject
+    {
+        if ($left->type() === ObjectType::ARRAY_OBJ && $index->type() === ObjectType::INTEGER_OBJ) {
+            return self::evalArrayIndex($left, $index);
+        }
+
+        return self::newError(sprintf('index operator not supported: %s', $left->type()));
+    }
+
+    private static function evalArrayIndex(WestArray $array, WestInteger $index): ?WestObject
+    {
+        $elements = $array->elements;
+        $idx = $index->value;
+        $max = count($elements) - 1;
+
+        if ($idx < 0 || $idx > $max) {
+            return new WestNull;
+        }
+
+        return $elements[$idx];
+    }
+
     private static function evalIfExpression(IfExpression $node, Environment $env): ?WestObject
     {
         $condition = self::eval($node->condition, $env);
@@ -344,7 +395,7 @@ class Evaluator
         } elseif ($node->alternative !== null) {
             return self::eval($node->alternative, $env);
         } else {
-            return self::NULL;
+            return new WestNull;
         }
     }
 
