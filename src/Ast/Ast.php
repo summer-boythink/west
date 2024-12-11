@@ -185,6 +185,68 @@ class IntegerLiteral extends BaseNode implements Expression
     }
 }
 
+class ArrayLiteral extends BaseNode implements Expression
+{
+    public Token $token;
+
+    /** @var Expression[] */
+    public array $elements;
+
+    public function __construct(Token $token, array $elements)
+    {
+        $this->token = $token;
+        $this->elements = $elements;
+    }
+
+    public function expressionNode() {}
+
+    /**
+     * Returns the literal value of the token
+     */
+    public function tokenLiteral(): string
+    {
+        return $this->token->literal;
+    }
+
+    /**
+     * Returns the string representation of the node
+     */
+    public function __toString(): string
+    {
+        $elements = array_map(fn ($el) => $el->__toString(), $this->elements);
+
+        return '['.implode(', ', $elements).']';
+    }
+}
+
+class IndexExpression extends BaseNode implements Expression
+{
+    public Token $token; // '['词法单元
+
+    public Expression $left;
+
+    public Expression $index;
+
+    public function __construct(Token $token, Expression $left, Expression $index)
+    {
+        $this->token = $token;
+        $this->left = $left;
+        $this->index = $index;
+    }
+
+    public function expressionNode(): void {}
+
+    public function tokenLiteral(): string
+    {
+        return $this->token->literal;
+    }
+
+    public function __toString(): string
+    {
+        return '('.$this->left->__toString().'['.$this->index->__toString().'])';
+    }
+}
+
 class PrefixExpression extends BaseNode implements Expression
 {
     public string $operator;

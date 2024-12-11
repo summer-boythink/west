@@ -16,6 +16,7 @@ class Precedence
         TokenType::SLASH->value => PrecedenceLevel::PRODUCT,
         TokenType::ASTERISK->value => PrecedenceLevel::PRODUCT,
         TokenType::LPAREN->value => PrecedenceLevel::CALL,
+        TokenType::LBRACKET->value => PrecedenceLevel::INDEX,
     ];
 
     public static function getPrecedence(TokenType $type): PrecedenceLevel

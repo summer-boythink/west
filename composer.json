@@ -18,6 +18,9 @@
     ],
     "minimum-stability": "dev",
     "prefer-stable": true,
+    "require": {
+        "php": "^8.3"
+    },
     "require-dev": {
         "pestphp/pest": "*",
         "laravel/pint": "^1.18"
@@ -27,10 +30,10 @@
             "pestphp/pest-plugin": true
         }
     },
-    "scripts":{
-        "start":"@php bin/main.php",
-        "dump-autoload":"composer dump-autoload",
-        "fmt":"./vendor/bin/pint",
-        "test":"./vendor/bin/pest"
+    "scripts": {
+        "start": "@php bin/main.php",
+        "dump-autoload": "composer dump-autoload",
+        "fmt": "./vendor/bin/pint",
+        "test": "./vendor/bin/pest"
     }
 }

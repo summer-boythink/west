@@ -100,6 +100,14 @@ class Lexer
                 $tok = $this->newToken(TokenType::RPAREN, $this->ch);
                 break;
 
+            case '[':
+                $tok = $this->newToken(TokenType::LBRACKET, $this->ch);
+                break;
+
+            case ']':
+                $tok = $this->newToken(TokenType::RBRACKET, $this->ch);
+                break;
+
             case '"':
                 $tok = $this->newToken(TokenType::STRING, $this->readString());
                 break;

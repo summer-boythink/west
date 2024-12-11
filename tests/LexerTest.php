@@ -10,7 +10,7 @@ it('tokenizes input correctly', function () {
 let ten = 10;
 
 let add = fn(x, y) {
-  x + y;
+    x + y;
 };
 
 let result = add(five, ten);
@@ -26,7 +26,9 @@ if (5 < 10) {
 10 == 10;
 10 != 9;
 "foobar"
-"aa bb"';
+"foo bar"
+[1, 2];
+';
 
     // Expected tokens and literals
     $tests = [
@@ -104,7 +106,13 @@ if (5 < 10) {
         [TokenType::INT, '9'],
         [TokenType::SEMICOLON, ';'],
         [TokenType::STRING, 'foobar'],
-        [TokenType::STRING, 'aa bb'],
+        [TokenType::STRING, 'foo bar'],
+        [TokenType::LBRACKET, '['],
+        [TokenType::INT, '1'],
+        [TokenType::COMMA, ','],
+        [TokenType::INT, '2'],
+        [TokenType::RBRACKET, ']'],
+        [TokenType::SEMICOLON, ';'],
         [TokenType::EOF, ''],
     ];
 

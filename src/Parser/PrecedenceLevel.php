@@ -11,4 +11,5 @@ enum PrecedenceLevel: int
     case PRODUCT = 5;
     case PREFIX = 6;
     case CALL = 7;
+    case INDEX = 8;
 }

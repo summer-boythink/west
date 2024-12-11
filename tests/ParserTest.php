@@ -3,11 +3,13 @@
 namespace Tests;
 
 use Exception;
+use Summer\West\Ast\ArrayLiteral;
 use Summer\West\Ast\BooleanLiteral;
 use Summer\West\Ast\CallExpression;
 use Summer\West\Ast\ExpressionStatement;
 use Summer\West\Ast\FunctionLiteral;
 use Summer\West\Ast\Identifier;
+use Summer\West\Ast\IndexExpression;
 use Summer\West\Ast\InfixExpression;
 use Summer\West\Ast\IntegerLiteral;
 use Summer\West\Ast\LetStatement;
@@ -432,6 +434,92 @@ it('parses expressions with correct operator precedence including call expressio
         ['input' => 'a + add(b * c) + d', 'expected' => '((a + add((b * c))) + d)'],
         ['input' => 'add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))', 'expected' => 'add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))'],
         ['input' => 'add(a + b + c * d / f + g)', 'expected' => 'add((((a + b) + ((c * d) / f)) + g))'],
+    ];
+
+    foreach ($tests as $test) {
+        $lexer = new Lexer($test['input']);
+        $parser = new Parser($lexer);
+
+        $program = $parser->parseProgram();
+        checkParserErrors($parser);
+
+        $actual = (string) $program;
+
+        // 验证解析的输出是否符合预期
+        expect($actual)->toBe($test['expected']);
+    }
+});
+
+it('parses array literals correctly', function () {
+    $input = '[1, 2 * 2, 3 + 3]';
+
+    $lexer = new Lexer($input);
+    $parser = new Parser($lexer);
+
+    $program = $parser->parseProgram();
+    checkParserErrors($parser);
+
+    // 检查 Program 的 statements 数量是否正确
+    expect($program->statements)->toHaveCount(1);
+
+    // 检查第一个语句是否是 ExpressionStatement
+    /** @var ExpressionStatement $stmt */
+    $stmt = $program->statements[0];
+    expect($stmt)->toBeInstanceOf(ExpressionStatement::class);
+
+    // 检查表达式是否是 ArrayLiteral
+    /** @var ArrayLiteral $array */
+    $array = $stmt->expression;
+    expect($array)->toBeInstanceOf(ArrayLiteral::class);
+
+    // 验证元素数量
+    expect($array->elements)->toHaveCount(3);
+
+    // 验证每个元素
+    testLiteralExpression($array->elements[0], 1);
+    testInfixExpression($array->elements[1], 2, '*', 2);
+    testInfixExpression($array->elements[2], 3, '+', 3);
+});
+
+it('parses index expressions correctly', function () {
+    $input = 'myArray[1 + 1]';
+
+    $lexer = new Lexer($input);
+    $parser = new Parser($lexer);
+
+    $program = $parser->parseProgram();
+    checkParserErrors($parser);
+
+    // 检查 Program 的 statements 数量是否正确
+    expect($program->statements)->toHaveCount(1);
+
+    // 检查第一个语句是否是 ExpressionStatement
+    /** @var ExpressionStatement $stmt */
+    $stmt = $program->statements[0];
+    expect($stmt)->toBeInstanceOf(ExpressionStatement::class);
+
+    // 检查表达式是否是 IndexExpression
+    /** @var IndexExpression $indexExp */
+    $indexExp = $stmt->expression;
+    expect($indexExp)->toBeInstanceOf(IndexExpression::class);
+
+    // 验证左侧表达式是否为标识符
+    testIdentifier($indexExp->left, 'myArray');
+
+    // 验证索引表达式
+    testInfixExpression($indexExp->index, 1, '+', 1);
+});
+
+it('parses operator precedence with index expressions correctly', function () {
+    $tests = [
+        [
+            'input' => 'a * [1, 2, 3, 4][b * c] * d',
+            'expected' => '((a * ([1, 2, 3, 4][(b * c)])) * d)',
+        ],
+        [
+            'input' => 'add(a * b[2], b[1], 2 * [1, 2][1])',
+            'expected' => 'add((a * (b[2])), (b[1]), (2 * ([1, 2][1])))',
+        ],
     ];
 
     foreach ($tests as $test) {

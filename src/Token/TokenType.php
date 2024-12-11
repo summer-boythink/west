@@ -31,6 +31,8 @@ enum TokenType: string
     case RPAREN = ')';
     case LBRACE = '{';
     case RBRACE = '}';
+    case LBRACKET = '[';
+    case RBRACKET = ']';
 
     // Keywords
     case FUNCTION = 'FUNCTION';

@@ -8,6 +8,7 @@ use Summer\West\Ast\Identifier;
 use Summer\West\Ast\Program;
 use Summer\West\Ast\Statement;
 use Summer\West\Lexer\Lexer;
+use Summer\West\Parser\Expression\ArrayLiteralParser;
 use Summer\West\Parser\Expression\BlockStatementParser;
 use Summer\West\Parser\Expression\BooleanLiteralParser;
 use Summer\West\Parser\Expression\CallArgumentsParser;
@@ -19,6 +20,7 @@ use Summer\West\Parser\Expression\IdentifierParser;
 use Summer\West\Parser\Expression\IExpression;
 use Summer\West\Parser\Expression\IfExpressionParser;
 use Summer\West\Parser\Expression\IinfixExpression;
+use Summer\West\Parser\Expression\IndexExpressionParser;
 use Summer\West\Parser\Expression\InfixExpressionParser;
 use Summer\West\Parser\Expression\IntegerLiteralParser;
 use Summer\West\Parser\Expression\PrefixExpressionParser;
@@ -75,6 +77,7 @@ class Parser
         $this->registerPrefix(TokenType::IF, IfExpressionParser::class);
         $this->registerPrefix(TokenType::FUNCTION, FunctionLiteralParser::class);
         $this->registerPrefix(TokenType::STRING, StringLiteralParser::class);
+        $this->registerPrefix(TokenType::LBRACKET, ArrayLiteralParser::class);
 
         // 注册中缀解析函数
         $this->registerInfix(TokenType::PLUS, InfixExpressionParser::class);
@@ -86,7 +89,7 @@ class Parser
         $this->registerInfix(TokenType::LT, InfixExpressionParser::class);
         $this->registerInfix(TokenType::GT, InfixExpressionParser::class);
         $this->registerInfix(TokenType::LPAREN, CallExpressionParser::class);
-
+        $this->registerInfix(TokenType::LBRACKET, IndexExpressionParser::class);
     }
 
     public function getErrors(): array
@@ -193,6 +196,38 @@ class Parser
         $functionParametersParser = new FunctionParametersParser($this);
 
         return $functionParametersParser->parse();
+    }
+
+    /**
+     * Parses a list of expressions, ending with a specific token.
+     *
+     * @param  TokenType  $endToken  The token type that indicates the end of the list.
+     * @return Expression[]|null The parsed expressions or null on failure.
+     */
+    public function parseExpressionList(TokenType $endToken): ?array
+    {
+        $list = [];
+
+        if ($this->peekTokenIs($endToken)) {
+            $this->next();
+
+            return $list;
+        }
+
+        $this->next();
+        $list[] = $this->parseExpression(PrecedenceLevel::LOWEST);
+
+        while ($this->peekTokenIs(TokenType::COMMA)) {
+            $this->next(); // Consume the comma
+            $this->next(); // Move to the next expression
+            $list[] = $this->parseExpression(PrecedenceLevel::LOWEST);
+        }
+
+        if (! $this->expectPeek($endToken)) {
+            return null;
+        }
+
+        return $list;
     }
 
     /**
