@@ -31,9 +31,8 @@ class FileRepl
 
         $env = new Environment;
         $evaluated = Evaluator::eval($program, $env);
-
         if ($evaluated !== null) {
-            fwrite($out, $evaluated->inspect()."\n");
+            fwrite($out, $evaluated->inspect());
         }
     }
 }

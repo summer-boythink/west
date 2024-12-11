@@ -31,6 +31,7 @@ use Summer\West\Object\WestNull;
 use Summer\West\Object\WestObject;
 use Summer\West\Object\WestReturnValue;
 use Summer\West\Object\WestString;
+use Summer\West\Object\WestVoid;
 
 class Evaluator
 {
@@ -191,7 +192,7 @@ class Evaluator
 
     private static function evalBlockStatement(BlockStatement $block, Environment $env): ?WestObject
     {
-        $result = null;
+        $result = new WestVoid;
 
         foreach ($block->statements as $statement) {
             $result = self::eval($statement, $env);
@@ -283,7 +284,7 @@ class Evaluator
         $leftVal = $left->value;
         $rightVal = $right->value;
 
-        return new WestString($leftVal.$rightVal);
+        return new WestString("$leftVal$rightVal");
     }
 
     private static function evalIntegerInfixExpression(string $operator, ?WestObject $left, ?WestObject $right): ?WestObject
